@@ -1,20 +1,18 @@
 /**
  * Copyright (C) 2015  the original author or authors.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */ 
-
-
+ */
 
 
 package mujava.cli;
@@ -37,187 +35,188 @@ import com.beust.jcommander.JCommander;
 
 import mujava.MutationSystem;
 import mujava.test.TestResultCLI;
- /**
+
+/**
  * <p>
  * Description: Mark equivalent mutants API for command line version
  * </p>
- * 
+ *
  * @author Lin Deng
- * @version 1.0  
-  */
+ * @version 1.0
+ */
 public class markequiv {
-	
-	static String muJavaHomePath = new String();
 
-	/**
-	 * @param args
-	 * @throws IOException
-	 */
-	public static void main(String[] args) throws IOException {
-		markequivCom jct = new markequivCom();
-		String[] argv = { "Triangle", "AOIS_18", "Triangle" }; // dev use
+    static String muJavaHomePath = new String();
 
-		JCommander jCommander = new JCommander(jct, args);
+    /**
+     * @param args
+     * @throws IOException
+     */
+    public static void main(String[] args) throws IOException {
+        markequivCom jct = new markequivCom();
+        String[] argv = {"Triangle", "AOIS_18", "Triangle"}; // dev use
 
-		if (jct.getParameters().size() < 3) {
-			Util.Error("At least 3 arguments required: \"class-name\" \"mutant-name\" \"session-name\"");
-			return;
-		}
+        JCommander jCommander = new JCommander(jct, args);
 
-		String targetClassName = jct.getParameters().get(0);
+        if (jct.getParameters().size() < 3) {
+            Util.Error("At least 3 arguments required: \"class-name\" \"mutant-name\" \"session-name\"");
+            return;
+        }
 
-		// if(jct.getName()!=null)
-		// targetClassName = jct.getName();
-		// else {
-		// return;
-		// }
+        String targetClassName = jct.getParameters().get(0);
 
-		List<String> parameters = jct.getParameters();
-		muJavaHomePath = Util.loadConfig();
-		String session = parameters.get(parameters.size() - 1);
-		parameters.remove(parameters.size() - 1);
-		ArrayList<String> eqMutants = new ArrayList<>();
-		eqMutants.addAll(parameters);
+        // if(jct.getName()!=null)
+        // targetClassName = jct.getName();
+        // else {
+        // return;
+        // }
 
-		// get all file names
-		File folder = new File(muJavaHomePath + "/" + session + "/result" + "/" + targetClassName + "/"
-				+ MutationSystem.TM_DIR_NAME);
-		File[] listOfFiles = folder.listFiles();
+        List<String> parameters = jct.getParameters();
+        muJavaHomePath = Util.loadConfig();
+        String session = parameters.get(parameters.size() - 1);
+        parameters.remove(parameters.size() - 1);
+        ArrayList<String> eqMutants = new ArrayList<>();
+        eqMutants.addAll(parameters);
 
-		// run one by one update
-		if (listOfFiles == null) {
-			Util.Error("Can't find result folder of class: " + targetClassName);
-			return;
-		}
-		for (File file : listOfFiles) {
-			if (file.getName().contains("mutant_list")) {
-				TestResultCLI tr = new TestResultCLI();
+        // get all file names
+        File folder = new File(muJavaHomePath + "/" + session + "/result" + "/" + targetClassName + "/"
+                + MutationSystem.TM_DIR_NAME);
+        File[] listOfFiles = folder.listFiles();
 
-				tr.path = muJavaHomePath + "/" + session + "/result" + "/" + targetClassName + "/"
-						+ MutationSystem.TM_DIR_NAME + "/" + file.getName();
-				tr.getResults();
+        // run one by one update
+        if (listOfFiles == null) {
+            Util.Error("Can't find result folder of class: " + targetClassName);
+            return;
+        }
+        for (File file : listOfFiles) {
+            if (file.getName().contains("mutant_list")) {
+                TestResultCLI tr = new TestResultCLI();
 
-				for (String eqMutant : eqMutants) {
-					if (!tr.live_mutants.contains(eqMutant))
-						continue;
+                tr.path = muJavaHomePath + "/" + session + "/result" + "/" + targetClassName + "/"
+                        + MutationSystem.TM_DIR_NAME + "/" + file.getName();
+                tr.getResults();
 
-					// erase and update
-					tr.live_mutants.remove(eqMutant);
-					tr.eq_mutants.add(eqMutant);
-				}
+                for (String eqMutant : eqMutants) {
+                    if (!tr.live_mutants.contains(eqMutant))
+                        continue;
 
-				// tr.markEqvl(eqMutant);
+                    // erase and update
+                    tr.live_mutants.remove(eqMutant);
+                    tr.eq_mutants.add(eqMutant);
+                }
 
-				markMutantListFile(tr, file);
+                // tr.markEqvl(eqMutant);
 
-			} else if (file.getName().contains("result_list")) { // also need to
-																	// mark
-																	// result_list.csv
-			// TestResultCLI tr = new TestResultCLI();
-			// tr.path = MutationSystem.SYSTEM_HOME + "/"
-			// + session +
-			// "/result"+"/"+targetClassName+"/"+MutationSystem.TM_DIR_NAME+"\\"+file.getName();
-			// tr.getResults();
+                markMutantListFile(tr, file);
 
-				markResultListFile(eqMutants, file);
-			}
-		}
+            } else if (file.getName().contains("result_list")) { // also need to
+                // mark
+                // result_list.csv
+                // TestResultCLI tr = new TestResultCLI();
+                // tr.path = MutationSystem.SYSTEM_HOME + "/"
+                // + session +
+                // "/result"+"/"+targetClassName+"/"+MutationSystem.TM_DIR_NAME+"\\"+file.getName();
+                // tr.getResults();
 
-		Util.Print("All equivalent mutants are marked.");
-		//System.exit(0);
+                markResultListFile(eqMutants, file);
+            }
+        }
 
-	}
+        Util.Print("All equivalent mutants are marked.");
+        //System.exit(0);
 
-	private static void markResultListFile(ArrayList<String> eqMutants, File file) throws IOException {
-		// read csv file
-		Map<String, ArrayList<String>> oldResults = new HashMap<String, ArrayList<String>>();
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-		String s = new String();
-		while ((s = br.readLine()) != null) // read lines
-		{
-			String[] temp = s.split(",");
-			ArrayList<String> tempList = new ArrayList<>();
-			for (int i = 1; i < temp.length; i++) {
-				tempList.add(temp[i]);
-			}
-			oldResults.put(temp[0], tempList);
-		}
+    }
 
-		// mark eq
-		for (String eqMutant : eqMutants) {
-			ArrayList<String> newResult = oldResults.get(eqMutant);
-			if (newResult == null) {
-				continue;
-			}
-			if (!newResult.get(newResult.size() - 2).equals("0")) {
-				continue;
-			}
-			newResult.set(newResult.size() - 1, "Y");
-			oldResults.put(eqMutant, newResult);
-		}
+    private static void markResultListFile(ArrayList<String> eqMutants, File file) throws IOException {
+        // read csv file
+        Map<String, ArrayList<String>> oldResults = new HashMap<String, ArrayList<String>>();
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+        String s = new String();
+        while ((s = br.readLine()) != null) // read lines
+        {
+            String[] temp = s.split(",");
+            ArrayList<String> tempList = new ArrayList<>();
+            for (int i = 1; i < temp.length; i++) {
+                tempList.add(temp[i]);
+            }
+            oldResults.put(temp[0], tempList);
+        }
 
-		// write file
-		String path = file.getPath();
+        // mark eq
+        for (String eqMutant : eqMutants) {
+            ArrayList<String> newResult = oldResults.get(eqMutant);
+            if (newResult == null) {
+                continue;
+            }
+            if (!newResult.get(newResult.size() - 2).equals("0")) {
+                continue;
+            }
+            newResult.set(newResult.size() - 1, "Y");
+            oldResults.put(eqMutant, newResult);
+        }
 
-		file.delete();
+        // write file
+        String path = file.getPath();
 
-		file = new File(path);
-		FileOutputStream fout = new FileOutputStream(file);
-		StringBuffer fileContent = new StringBuffer();
+        file.delete();
 
-		// build title
-		fileContent.append("Mutant");
-		for (String test : oldResults.get("Mutant"))
-			fileContent.append("," + test);
+        file = new File(path);
+        FileOutputStream fout = new FileOutputStream(file);
+        StringBuffer fileContent = new StringBuffer();
 
-		fileContent.append("\r\n");
-		// build content
-		for (Entry<String, ArrayList<String>> oldEntry : oldResults.entrySet()) {
-			if (oldEntry.getKey().equals("Mutant"))
-				continue;
-			fileContent.append(oldEntry.getKey());
-			for (String str : oldEntry.getValue()) {
-				fileContent.append("," + str);
-			}
+        // build title
+        fileContent.append("Mutant");
+        for (String test : oldResults.get("Mutant"))
+            fileContent.append("," + test);
 
-			fileContent.append("\r\n");
-		}
+        fileContent.append("\r\n");
+        // build content
+        for (Entry<String, ArrayList<String>> oldEntry : oldResults.entrySet()) {
+            if (oldEntry.getKey().equals("Mutant"))
+                continue;
+            fileContent.append(oldEntry.getKey());
+            for (String str : oldEntry.getValue()) {
+                fileContent.append("," + str);
+            }
 
-		fout.write(fileContent.toString().getBytes("utf-8"));
-		fout.close();
+            fileContent.append("\r\n");
+        }
 
-	}
+        fout.write(fileContent.toString().getBytes("utf-8"));
+        fout.close();
 
-	private static void markMutantListFile(TestResultCLI tr, File file) throws UnsupportedEncodingException, IOException {
-		// delete original file
-		file.delete();
+    }
 
-		// build new file
-		File newFile = new File(tr.getPath());
+    private static void markMutantListFile(TestResultCLI tr, File file) throws UnsupportedEncodingException, IOException {
+        // delete original file
+        file.delete();
 
-		FileOutputStream fout = new FileOutputStream(newFile);
-		StringBuffer fileContent = new StringBuffer();
+        // build new file
+        File newFile = new File(tr.getPath());
 
-		fileContent.append("killed mutants (" + tr.killed_mutants.size() + "): ");
-		for (Object object : tr.killed_mutants) {
-			fileContent.append(object.toString() + ", ");
-		}
-		fileContent.append("\r\n");
+        FileOutputStream fout = new FileOutputStream(newFile);
+        StringBuffer fileContent = new StringBuffer();
 
-		fileContent.append("live mutants (" + tr.live_mutants.size() + "): ");
-		for (Object object : tr.live_mutants) {
-			fileContent.append(object.toString() + ", ");
-		}
-		fileContent.append("\r\n");
+        fileContent.append("killed mutants (" + tr.killed_mutants.size() + "): ");
+        for (Object object : tr.killed_mutants) {
+            fileContent.append(object.toString() + ", ");
+        }
+        fileContent.append("\r\n");
 
-		fileContent.append("equivalent mutants (" + tr.eq_mutants.size() + "): ");
-		for (Object object : tr.eq_mutants) {
-			fileContent.append(object.toString() + ", ");
-		}
+        fileContent.append("live mutants (" + tr.live_mutants.size() + "): ");
+        for (Object object : tr.live_mutants) {
+            fileContent.append(object.toString() + ", ");
+        }
+        fileContent.append("\r\n");
 
-		fout.write(fileContent.toString().getBytes("utf-8"));
-		fout.close();
+        fileContent.append("equivalent mutants (" + tr.eq_mutants.size() + "): ");
+        for (Object object : tr.eq_mutants) {
+            fileContent.append(object.toString() + ", ");
+        }
 
-	}
+        fout.write(fileContent.toString().getBytes("utf-8"));
+        fout.close();
+
+    }
 
 }
