@@ -22,7 +22,7 @@ import openjava.ptree.*;
 
 import java.io.*;
 import mujava.op.*;
-import mujava.op.basic.*;
+import mujava.op.weak.*;
 import mujava.op.util.*;
 import mujava.util.Debug;
  /**

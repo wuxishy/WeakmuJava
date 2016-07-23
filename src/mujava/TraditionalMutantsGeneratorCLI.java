@@ -23,7 +23,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 
-import mujava.op.basic.*;
+import mujava.op.weak.*;
 import mujava.op.util.*;
 import mujava.util.Debug;
 /**
