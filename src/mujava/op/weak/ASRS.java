@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015  the original author or authors.
+ * Copyright (C) 2016 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,17 +50,19 @@ public class ASRS extends MethodLevelMutator {
      *    replace it with each of the other shift operators.
      */
     public void visit(AssignmentExpression p) throws ParseTreeException {
+        OJClass type = getType(p);
+
         int op = p.getOperator();
         if ((op == AssignmentExpression.ADD) || (op == AssignmentExpression.SUB) ||
                 (op == AssignmentExpression.MULT) || (op == AssignmentExpression.DIVIDE) ||
                 (op == AssignmentExpression.MOD)) {
-            genArithmeticMutants(p, op);
+            genArithmeticMutants(p, op, type);
         } else if ((op == AssignmentExpression.AND) || (op == AssignmentExpression.OR) ||
                 (op == AssignmentExpression.XOR)) {
-            genLogicalMutants(p, op);
+            genLogicalMutants(p, op, type);
         } else if ((op == AssignmentExpression.SHIFT_L) || (op == AssignmentExpression.SHIFT_R) ||
                 (op == AssignmentExpression.SHIFT_RR)) {
-            genShiftMutants(p, op);
+            genShiftMutants(p, op, type);
         }
     }
 
@@ -68,32 +70,32 @@ public class ASRS extends MethodLevelMutator {
      * Replace the arithmetic assignment operator (+=, -+, *=, /=, %=)
      * by each of the other operators
      */
-    void genArithmeticMutants(AssignmentExpression p, int op) {
+    void genArithmeticMutants(AssignmentExpression p, int op, OJClass type) {
         AssignmentExpression mutant;
         if (!(op == AssignmentExpression.ADD)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.ADD);
-            outputToFile(p, mutant);
+            instrumentate(p, AssignmentExpression.ADD, type);
         }
         if (!(op == AssignmentExpression.DIVIDE)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.DIVIDE);
-            outputToFile(p, mutant);
+            instrumentate(p, AssignmentExpression.DIVIDE, type);
         }
         if (!(op == AssignmentExpression.MULT)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.MULT);
-            outputToFile(p, mutant);
+            instrumentate(p, AssignmentExpression.MULT, type);
         }
         if (!(op == AssignmentExpression.SUB)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.SUB);
-            outputToFile(p, mutant);
+            instrumentate(p, AssignmentExpression.SUB, type);
         }
         if (!(op == AssignmentExpression.MOD)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.MOD);
-            outputToFile(p, mutant);
+            instrumentate(p, AssignmentExpression.MOD, type);
         }
     }
 
@@ -101,22 +103,22 @@ public class ASRS extends MethodLevelMutator {
      * Replace the logical assignment operator (&=, |+, ^=)
      * by each of the other operators
      */
-    void genLogicalMutants(AssignmentExpression p, int op) {
+    void genLogicalMutants(AssignmentExpression p, int op, OJClass type) {
         AssignmentExpression mutant;
         if (!(op == AssignmentExpression.AND)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.AND);
-            outputToFile(p, mutant);
+            instrumentate(p, AssignmentExpression.AND, type);
         }
         if (!(op == AssignmentExpression.OR)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.OR);
-            outputToFile(p, mutant);
+            instrumentate(p, AssignmentExpression.OR, type);
         }
         if (!(op == AssignmentExpression.XOR)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.XOR);
-            outputToFile(p, mutant);
+            instrumentate(p, AssignmentExpression.XOR, type);
         }
     }
 
@@ -124,31 +126,62 @@ public class ASRS extends MethodLevelMutator {
      * Replace the shift assignment operator (<<=, >>=, >>>=)
      * by each of the other operators
      */
-    void genShiftMutants(AssignmentExpression p, int op) {
+    void genShiftMutants(AssignmentExpression p, int op, OJClass type) {
         AssignmentExpression mutant;
         if (!(op == AssignmentExpression.SHIFT_L)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.SHIFT_L);
-            outputToFile(p, mutant);
+            instrumentate(p, AssignmentExpression.SHIFT_L, type);
         }
         if (!(op == AssignmentExpression.SHIFT_R)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.SHIFT_R);
-            outputToFile(p, mutant);
+            instrumentate(p, AssignmentExpression.SHIFT_R, type);
         }
         if (!(op == AssignmentExpression.SHIFT_RR)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
-            mutant.setOperator(AssignmentExpression.SHIFT_R);
-            outputToFile(p, mutant);
+            mutant.setOperator(AssignmentExpression.SHIFT_RR);
+            instrumentate(p, AssignmentExpression.SHIFT_RR, type);
         }
     }
+
+
+    public void instrumentate(AssignmentExpression original, int op_val, OJClass type) {
+        Instrument inst = new Instrument();
+        inst.init.add(new VariableDeclaration(TypeName.forOJClass(type), 
+                    weakConfig.varPrefix + "RHS", original.getRight()));
+
+        String op = opString[original.getOperator()];
+        BinaryExpression a = new BinaryExpression(original.getLeft(), op, 
+                new Variable(weakConfig.varPrefix + "RHS"));
+        inst.init.add(new VariableDeclaration(TypeName.forOJClass(type), 
+                    weakConfig.varPrefix + "ORIGINAL", a));
+        
+        op = opString[op_val];
+        BinaryExpression b = new BinaryExpression(original.getLeft(), op, 
+                new Variable(weakConfig.varPrefix + "RHS"));
+        inst.init.add(new VariableDeclaration(TypeName.forOJClass(type), 
+                    weakConfig.varPrefix + "MUTANT", b));
+
+        inst.setAssertion(weakConfig.varPrefix + "ORIGINAL",
+                weakConfig.varPrefix + "MUTANT");
+
+        AssignmentExpression assign = new AssignmentExpression(original.getLeft(), "=",
+                    new Variable(weakConfig.varPrefix + "ORIGINAL"));
+        inst.post.add(new ExpressionStatement(assign));
+
+        outputToFile(original, inst);
+    }
+
+    private static String[] opString = {"", "*", "/", "%", "+", "-", 
+        "<<", ">>", ">>>", "&", "^", "|"};
 
     /**
      * Output ASRS mutants to file
      * @param original
-     * @param mutant
+     * @param inst
      */
-    public void outputToFile(AssignmentExpression original, AssignmentExpression mutant) {
+    public void outputToFile(AssignmentExpression original, Instrument inst) {
         if (comp_unit == null)
             return;
 
@@ -158,15 +191,18 @@ public class ASRS extends MethodLevelMutator {
         String mutant_dir = getMuantID("ASRS");
 
         try {
+            //System.out.println("DEBUG_0");
             PrintWriter out = getPrintWriter(f_name);
-            ASRS_Writer writer = new ASRS_Writer(mutant_dir, out);
-            writer.setMutant(original, mutant);
+            InstrumentationCodeWriter writer =
+                    new InstrumentationCodeWriter(mutant_dir, out);
+            writer.setStatement((Statement) original.getParent());
+            writer.setInstrument(inst);
             writer.setMethodSignature(currentMethodSignature);
             comp_unit.accept(writer);
             out.flush();
             out.close();
         } catch (IOException e) {
-            System.err.println("fails to create " + f_name);
+        System.err.println("fails to create " + f_name);
         } catch (ParseTreeException e) {
             System.err.println("errors during printing " + f_name);
             e.printStackTrace();
