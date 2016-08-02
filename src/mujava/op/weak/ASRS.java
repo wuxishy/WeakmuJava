@@ -163,7 +163,7 @@ public class ASRS extends MethodLevelMutator {
         inst.init.add(new VariableDeclaration(TypeName.forOJClass(type), 
                     weakConfig.varPrefix + "MUTANT", b));
 
-        inst.setAssertion(weakConfig.varPrefix + "ORIGINAL",
+        inst.addAssertion(weakConfig.varPrefix + "ORIGINAL",
                 weakConfig.varPrefix + "MUTANT");
 
         AssignmentExpression assign = new AssignmentExpression(original.getLeft(), "=",

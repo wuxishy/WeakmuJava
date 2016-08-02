@@ -19,7 +19,6 @@ package mujava.op.weak;
 import java.io.*;
 import java.util.ArrayList;
 
-import com.sun.tools.corba.se.idl.constExpr.*;
 import mujava.op.util.TraditionalMutantCodeWriter;
 import openjava.ptree.*;
 import openjava.ptree.Expression;
@@ -76,7 +75,6 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         out.println();
         line_num++;
 
-
         /* package statement */
         String qn = p.getPackage();
         if (qn != null) {
@@ -92,93 +90,29 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
 
         /* import statement list */
         String[] islst = p.getDeclaredImports();
-        if (islst.length != 0) {
-            for (int i = 0; i < islst.length; ++i) {
-                out.println("import " + islst[i] + ";");
-                line_num++;
-            }
-            out.println();
-            line_num++;
-            out.println();
+        for (int i = 0; i < islst.length; ++i) {
+            out.println("import " + islst[i] + ";");
             line_num++;
         }
+
+        // exception handling
+        out.println("import static mujava.op.weak.Instrument.*;");
+        line_num++;
+
+        out.println();
+        line_num++;
         
         /* type declaration list */
         ClassDeclarationList tdlst = p.getClassDeclarations();
         tdlst.accept(this);
     }
 
-    // exception hack xD
-    public void visit(MethodDeclaration p)
-            throws ParseTreeException {
-
-        writeTab();
-
-        /*ModifierList*/
-        ModifierList modifs = p.getModifiers();
-        if (modifs != null) {
-            modifs.accept(this);
-            if (!modifs.isEmptyAsRegular()) out.print(" ");
-        }
-
-        //print generics type parameters
-        TypeParameterList tpl = p.getTypeParameterList();
-        if (tpl != null)
-            tpl.accept(this);
-        out.print(" ");
-
-        TypeName ts = p.getReturnType();
-        ts.accept(this);
-
-        out.print(" ");
-
-        String name = p.getName();
-        out.print(name);
-
-        ParameterList params = p.getParameters();
-        out.print("(");
-        if (!params.isEmpty()) {
-            out.print(" ");
-            params.accept(this);
-            out.print(" ");
-        } else {
-            params.accept(this);
-        }
-        out.print(")");
-
-        out.println();
-        line_num++;
-        writeTab();
-        writeTab();
-        out.print("throws Exception");
-
-
-        StatementList bl = p.getBody();
-        if (bl == null) {
-            out.print(";");
-        } else {
-            out.println();
-            line_num++;
-            writeTab();
-            out.print("{");
-            out.println();
-            line_num++;
-            pushNest();
-            bl.accept(this);
-            popNest();
-            writeTab();
-            out.print("}");
-        }
-
-        out.println();
-        line_num++;
-    }
-
     public void visit(ExpressionStatement p) throws ParseTreeException {
         if(isSameObject(curStatement, p)) {
             super.visit(inst.init);
-            writeString(inst.assertion);
+            for (String str : inst.assertion) writeString(str);
             super.visit(inst.post);
+            writeString(Instrument.exit);
         }
         else super.visit(p);
     }

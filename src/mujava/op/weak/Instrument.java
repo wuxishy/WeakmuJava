@@ -15,6 +15,8 @@
  */
 package mujava.op.weak;
 
+import java.util.ArrayList;
+
 import openjava.mop.*;
 import openjava.ptree.*;
 
@@ -27,20 +29,39 @@ import openjava.ptree.*;
 
 public class Instrument {
     public StatementList init;
-    public String assertion;
+    public ArrayList<String> assertion;
     public StatementList post;
 
     public Instrument() {
         init = new StatementList();
+        assertion = new ArrayList<String>();
         post = new StatementList();
     }
 
-    public void setAssertion(String a, String b) {
-        assertion = "if (" + a + " != " + b + " ) throw new Exception();";
+    public void addAssertion(String a, String b) {
+        String if_t = (assertion.isEmpty()) ? "if (" : "else if (";
+        assertion.add(if_t + a + " != " + b + " ) throw new WeakKillException();");
     }
 
-    public void setFloatAssertion(String a, String b) {
-        assertion = "if (Math.abs(" + a + " - " + b + ") > " + weakConfig.eps +
-            ") throw new Exception();";
+    public void addFloatAssertion(String a, String b) {
+        String if_t = (assertion.isEmpty()) ? "if (" : "else if (";
+        assertion.add(if_t + "Math.abs(" + a + " - " + b + ") > " + weakConfig.eps +
+            ") throw new WeakKillException();");
+    }
+
+    // Hack: because java thinks "unreachable code" is a compile error.
+    // Tested up to Java 8, not guaranteed to work in future versions of Java.
+    public static String exit = "if (true) throw new WeakLiveException();";
+
+    public static class WeakKillException extends RuntimeException{
+        public WeakKillException(){
+            super("This mutant is weakly killed");
+        }
+    }
+
+    public static class WeakLiveException extends RuntimeException{
+        public WeakLiveException(){
+            super("This mutant is not weakly killed");
+        }
     }
 }
