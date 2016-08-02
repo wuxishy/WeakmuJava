@@ -26,8 +26,8 @@ import java.io.*;
  *    (+=, -+, *=, /=, %=, &=, |=, ^=, <<=, >>=, >>>=) by each of the 
  *    other operators  
  * </p>
- * @author Yu-Seung Ma
- * @version 1.0
+ * @author Haoyuan Sun
+ * @version 0.1a
  */
 
 /* Each occurrence of one of the assignment operators
@@ -191,8 +191,8 @@ public class ASRS extends MethodLevelMutator {
         String mutant_dir = getMuantID("ASRS");
 
         try {
-            //System.out.println("DEBUG_0");
             PrintWriter out = getPrintWriter(f_name);
+            //PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
             InstrumentationCodeWriter writer =
                     new InstrumentationCodeWriter(mutant_dir, out);
             writer.setStatement((Statement) original.getParent());
@@ -202,7 +202,7 @@ public class ASRS extends MethodLevelMutator {
             out.flush();
             out.close();
         } catch (IOException e) {
-        System.err.println("fails to create " + f_name);
+            System.err.println("fails to create " + f_name);
         } catch (ParseTreeException e) {
             System.err.println("errors during printing " + f_name);
             e.printStackTrace();

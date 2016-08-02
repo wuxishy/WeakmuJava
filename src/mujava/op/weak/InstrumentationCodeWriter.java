@@ -17,9 +17,12 @@
 package mujava.op.weak;
 
 import java.io.*;
+import java.util.ArrayList;
 
+import com.sun.tools.corba.se.idl.constExpr.*;
 import mujava.op.util.TraditionalMutantCodeWriter;
 import openjava.ptree.*;
+import openjava.ptree.Expression;
 
 /**
  * <p>Description: Writes the mutated statement and its associated instrumentation 
@@ -35,17 +38,17 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     // 1 -- always killed, 2 -- always live, 0 -- run test
     private int preKill = 0;
 
-    // indicate if the mutant is in a block (if, while, switch-case, for)
-    private Statement curBlock;
-    // 0 -- in block body or not in a block
-    // 1 -- for loop instantiation, 2 -- condition, 3 -- for loop increment
-    private int blockType;
-
     // indicate which statement was mutated
     private Statement curStatement;
 
+    // indicate which expression was mutated
+    private Expression curExpr;
+
     // instrumentation code
     private Instrument inst;
+
+    // rename variables for for loops
+    private ArrayList<String> itName;
 
     public InstrumentationCodeWriter(PrintWriter out) {
         super(out);
@@ -57,7 +60,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
 
     public void setPreKill(int p) { preKill = p; }
 
-    public void setBlock(Statement b, int t) { curBlock = b; blockType = t; }
+    public void setExpr(Expression e) { curExpr = e; }
 
     public void setStatement(Statement s) { curStatement = s; }
 
@@ -173,9 +176,6 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
 
     public void visit(ExpressionStatement p) throws ParseTreeException {
         if(isSameObject(curStatement, p)) {
-            //System.out.println("DEBUG_1");
-            //System.out.println(inst.init.toString());
-            //System.out.println(inst.post.toString());
             super.visit(inst.init);
             writeString(inst.assertion);
             super.visit(inst.post);
@@ -183,10 +183,121 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         else super.visit(p);
     }
 
-    public void writeString(String str) {
+    public void visit(ForStatement p)
+            throws ParseTreeException {
+        /*if (!isSameObject(curStatement, p)){
+            super.visit(p);
+            return;
+        }*/
+
+        ExpressionList init = p.getInit();
+        TypeName tspec = p.getInitDeclType();
+        VariableDeclarator[] vdecls = p.getInitDecls();
+
+        out.println();
+        line_num++;
+
+        if (init != null && (!init.isEmpty())) {
+            for (int i = 0; i < init.size(); ++i) {
+                writeTab();
+                init.get(i).accept(this);
+                out.println(";");
+                line_num++;
+            }
+        } else if (tspec != null && vdecls != null && vdecls.length != 0) {
+            itName = new ArrayList<String>();
+
+            for (int i = 0; i < vdecls.length; ++i) {
+                writeTab();
+                tspec.accept(this);
+                out.print(" ");
+                itName.add(vdecls[i].getVariable());
+                writeNewName(vdecls[i], i);
+                out.println(";");
+                line_num++;
+            }
+        }
+
+        writeTab();
+        out.println("while (true) {");
+        line_num++;
+        pushNest();
+
+        Expression expr = p.getCondition();
+        if (expr != null) {
+            writeTab();
+            out.print("if (!(");
+            expr.accept(this);
+            out.print(")) break");
+        }
+
+        out.println(";");
+        line_num++;
+        out.println();
+        line_num++;
+
+        StatementList stmts = p.getStatements();
+        if (stmts.isEmpty()) {
+            writeTab();
+            out.println(";");
+            line_num++;
+        } else {
+            stmts.accept(this);
+        }
+        out.println();
+        line_num++;
+
+        ExpressionList incr = p.getIncrement();
+        if (incr != null && (!incr.isEmpty())) {
+            for (int i = 0; i < incr.size(); ++i) {
+                writeTab();
+                incr.get(i).accept(this);
+                out.println(";");
+                line_num++;
+            }
+        }
+
+        popNest();
+        writeTab();
+        out.println("}");
+        line_num++;
+
+        itName = null;
+    }
+
+    public void visit(Variable p)
+            throws ParseTreeException {
+        String name = p.toString();
+
+        if (itName != null){
+            for(int i = 0; i < itName.size(); ++i)
+                if (itName.get(i).equals(name)) {
+                    out.print(weakConfig.varPrefix + "FOR_" + i);
+                    return;
+                }
+        }
+        out.print(name);
+    }
+
+    private void writeString(String str) {
         writeTab();
 
         out.println(str);
         line_num++;
+    }
+
+    private void writeNewName(VariableDeclarator p, int index)
+            throws ParseTreeException{
+        out.print(weakConfig.varPrefix + "FOR_" + index);
+
+        for (int i = 0; i < p.getDimension(); ++i) {
+            out.print("[]");
+        }
+
+        VariableInitializer varinit = p.getInitializer();
+        if (varinit != null) {
+            out.print(" = ");
+            varinit.accept(this);
+        }
     }
 }
