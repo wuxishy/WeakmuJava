@@ -36,7 +36,7 @@ import java.io.*;
  * 
  */
 
-public class ASRS extends MethodLevelMutator {
+public class ASRS extends InstrumentationMutator {
     public ASRS(FileEnvironment file_env, ClassDeclaration cdecl, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
     }
@@ -50,6 +50,8 @@ public class ASRS extends MethodLevelMutator {
      *    replace it with each of the other shift operators.
      */
     public void visit(AssignmentExpression p) throws ParseTreeException {
+        mutExpression = p;
+
         OJClass type = getType(p);
 
         int op = p.getOperator();
@@ -64,6 +66,8 @@ public class ASRS extends MethodLevelMutator {
                 (op == AssignmentExpression.SHIFT_RR)) {
             genShiftMutants(p, op, type);
         }
+
+        mutExpression = null;
     }
 
     /*
@@ -195,9 +199,13 @@ public class ASRS extends MethodLevelMutator {
             //PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
             InstrumentationCodeWriter writer =
                     new InstrumentationCodeWriter(mutant_dir, out);
-            writer.setStatement((Statement) original.getParent());
+
+            writer.setBlock(mutBlock);
+            writer.setStatement(mutStatement);
+            writer.setExpression(mutExpression);
             writer.setInstrument(inst);
             writer.setMethodSignature(currentMethodSignature);
+
             comp_unit.accept(writer);
             out.flush();
             out.close();

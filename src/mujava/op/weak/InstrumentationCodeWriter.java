@@ -21,7 +21,7 @@ import java.util.ArrayList;
 
 import mujava.op.util.TraditionalMutantCodeWriter;
 import openjava.ptree.*;
-import openjava.ptree.Expression;
+
 
 /**
  * <p>Description: Writes the mutated statement and its associated instrumentation 
@@ -37,11 +37,14 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     // 1 -- always killed, 2 -- always live, 0 -- run test
     private int preKill = 0;
 
+    // indicate which block was mutated
+    private Statement mutBlock;
+
     // indicate which statement was mutated
-    private Statement curStatement;
+    private Statement mutStatement;
 
     // indicate which expression was mutated
-    private Expression curExpr;
+    private Expression mutExpression;
 
     // instrumentation code
     private Instrument inst;
@@ -59,9 +62,11 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
 
     public void setPreKill(int p) { preKill = p; }
 
-    public void setExpr(Expression e) { curExpr = e; }
+    public void setBlock(Statement s) { mutBlock = s; }
 
-    public void setStatement(Statement s) { curStatement = s; }
+    public void setExpression(Expression e) { mutExpression = e; }
+
+    public void setStatement(Statement s) { mutStatement = s; }
 
     public void setInstrument(Instrument i) { inst = i; }
 
@@ -95,7 +100,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
             line_num++;
         }
 
-        // exception handling
+        // weak mutation kill and live
         out.println("import static mujava.op.weak.Instrument.*;");
         line_num++;
 
@@ -108,21 +113,24 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     }
 
     public void visit(ExpressionStatement p) throws ParseTreeException {
-        if(isSameObject(curStatement, p)) {
+        if(isSameObject(mutStatement, p)) {
             super.visit(inst.init);
             for (String str : inst.assertion) writeString(str);
             super.visit(inst.post);
-            writeString(Instrument.exit);
+            if(mutBlock == null) writeString(Instrument.exit);
         }
         else super.visit(p);
     }
 
-    public void visit(ForStatement p)
-            throws ParseTreeException {
-        /*if (!isSameObject(curStatement, p)){
+    public void visit(ForStatement p) throws ParseTreeException {
+        if (!isSameObject(mutBlock, p)) {
             super.visit(p);
             return;
-        }*/
+        } else if (!isSameObject(mutStatement, p)){
+            super.visit(p);
+            writeString(Instrument.exit);
+            return;
+        }
 
         ExpressionList init = p.getInit();
         TypeName tspec = p.getInitDeclType();
@@ -184,10 +192,16 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         ExpressionList incr = p.getIncrement();
         if (incr != null && (!incr.isEmpty())) {
             for (int i = 0; i < incr.size(); ++i) {
-                writeTab();
-                incr.get(i).accept(this);
-                out.println(";");
-                line_num++;
+                if(isSameObject(incr.get(i), mutExpression)){
+                    super.visit(inst.init);
+                    for (String str : inst.assertion) writeString(str);
+                    super.visit(inst.post);
+                } else {
+                    writeTab();
+                    incr.get(i).accept(this);
+                    out.println(";");
+                    line_num++;
+                }
             }
         }
 
@@ -196,11 +210,12 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         out.println("}");
         line_num++;
 
+        writeString(Instrument.exit);
+
         itName = null;
     }
 
-    public void visit(Variable p)
-            throws ParseTreeException {
+    public void visit(Variable p) throws ParseTreeException {
         String name = p.toString();
 
         if (itName != null){

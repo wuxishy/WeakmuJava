@@ -40,7 +40,7 @@ public class Instrument {
 
     public void addAssertion(String a, String b) {
         String if_t = (assertion.isEmpty()) ? "if (" : "else if (";
-        assertion.add(if_t + a + " != " + b + " ) throw new WeakKillException();");
+        assertion.add(if_t + a + " != " + b + ") throw new WeakKillException();");
     }
 
     public void addFloatAssertion(String a, String b) {
