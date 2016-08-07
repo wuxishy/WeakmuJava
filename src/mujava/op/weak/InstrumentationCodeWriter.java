@@ -112,12 +112,56 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         tdlst.accept(this);
     }
 
+    public void visit(DoWhileStatement p) throws ParseTreeException {
+        if(!isSameObject(mutBlock, p)){
+            super.visit(p);
+            return;
+        }
+        if(!isSameObject(mutStatement, p)){
+            super.visit(p);
+            writeString(Instrument.exit);
+            out.println();
+            line_num++;
+            return;
+        }
+        writeTab();
+
+        out.println("while (true) {");
+        line_num++;
+        pushNest();
+
+        StatementList stmts = p.getStatements();
+        if (!stmts.isEmpty()) stmts.accept(this);
+        out.println();
+        line_num++;
+
+        writeTab();
+        out.print("if (!(");
+        p.getExpression().accept(this);
+        out.print(")) break");
+        out.println(";");
+        line_num++;
+
+        popNest();
+        writeTab();
+        out.println("}");
+        line_num++;
+
+        writeString(Instrument.exit);
+        out.println();
+        line_num++;
+    }
+
     public void visit(ExpressionStatement p) throws ParseTreeException {
         if(isSameObject(mutStatement, p)) {
+            out.println();
+            line_num++;
             super.visit(inst.init);
             for (String str : inst.assertion) writeString(str);
             super.visit(inst.post);
             if(mutBlock == null) writeString(Instrument.exit);
+            out.println();
+            line_num++;
         }
         else super.visit(p);
     }
@@ -129,6 +173,8 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         } else if (!isSameObject(mutStatement, p)){
             super.visit(p);
             writeString(Instrument.exit);
+            out.println();
+            line_num++;
             return;
         }
 
@@ -179,13 +225,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         line_num++;
 
         StatementList stmts = p.getStatements();
-        if (stmts.isEmpty()) {
-            writeTab();
-            out.println(";");
-            line_num++;
-        } else {
-            stmts.accept(this);
-        }
+        if (!stmts.isEmpty()) stmts.accept(this);
         out.println();
         line_num++;
 
@@ -211,6 +251,8 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         line_num++;
 
         writeString(Instrument.exit);
+        out.println();
+        line_num++;
 
         itName = null;
     }
@@ -226,6 +268,46 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
                 }
         }
         out.print(name);
+    }
+
+    public void visit(WhileStatement p) throws ParseTreeException {
+        if(!isSameObject(mutBlock, p)){
+            super.visit(p);
+            return;
+        }
+        if(!isSameObject(mutStatement, p)){
+            super.visit(p);
+            writeString(Instrument.exit);
+            out.println();
+            line_num++;
+            return;
+        }
+        writeTab();
+
+        out.println("while (true) {");
+        line_num++;
+        pushNest();
+
+        writeTab();
+        out.print("if (!(");
+        p.getExpression().accept(this);
+        out.print(")) break");
+        out.println(";");
+        line_num++;
+
+        out.println();
+        line_num++;
+        StatementList stmts = p.getStatements();
+        if (!stmts.isEmpty()) stmts.accept(this);
+
+        popNest();
+        writeTab();
+        out.println("}");
+        line_num++;
+
+        writeString(Instrument.exit);
+        out.println();
+        line_num++;
     }
 
     private void writeString(String str) {
