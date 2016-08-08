@@ -21,7 +21,7 @@ package mujava.op.weak;
  * @version 0.1a
  */
 
-public class weakConfig {
+public class InstConfig {
     // tolerance for floating point comparison
     public static double eps = 1e-5;
 

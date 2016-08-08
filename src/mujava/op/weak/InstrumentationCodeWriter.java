@@ -263,7 +263,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         if (itName != null){
             for(int i = 0; i < itName.size(); ++i)
                 if (itName.get(i).equals(name)) {
-                    out.print(weakConfig.varPrefix + "FOR_" + i);
+                    out.print(InstConfig.varPrefix + "FOR_" + i);
                     return;
                 }
         }
@@ -288,10 +288,14 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         line_num++;
         pushNest();
 
+        super.visit(inst.init);
+        for (String str : inst.assertion) writeString(str);
+        super.visit(inst.post);
+
         writeTab();
-        out.print("if (!(");
-        p.getExpression().accept(this);
-        out.print(")) break");
+        out.print("if (!");;
+        out.print(inst.varName);
+        out.print(") break");
         out.println(";");
         line_num++;
 
@@ -319,7 +323,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
 
     private void writeNewName(VariableDeclarator p, int index)
             throws ParseTreeException{
-        out.print(weakConfig.varPrefix + "FOR_" + index);
+        out.print(InstConfig.varPrefix + "FOR_" + index);
 
         for (int i = 0; i < p.getDimension(); ++i) {
             out.print("[]");

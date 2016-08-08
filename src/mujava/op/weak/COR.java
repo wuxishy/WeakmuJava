@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015  the original author or authors.
+ * Copyright (C) 2016 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,11 @@ import java.io.*;
  *    (and-&&, or-||, and with no conditional evaluation-&, 
  *    or with no conditional evaluation-|, not equivalent-^)    
  * </p>
- * @author Yu-Seung Ma
- * @version 1.0
+ * @author Haoyuan Sun
+ * @version 0.1a
  */
 
-public class COR extends MethodLevelMutator {
+public class COR extends InstrumentationParser {
     public COR(FileEnvironment file_env, ClassDeclaration cdecl, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
     }
@@ -40,10 +40,7 @@ public class COR extends MethodLevelMutator {
      * each of the other logical operators
      */
     public void visit(BinaryExpression p) throws ParseTreeException {
-        Expression left = p.getLeft();
-        left.accept(this);
-        Expression right = p.getRight();
-        right.accept(this);
+        super.visit(p);
 
         if ((getType(p.getLeft()) == OJSystem.BOOLEAN) &&
                 (getType(p.getRight()) == OJSystem.BOOLEAN)) {
@@ -58,25 +55,40 @@ public class COR extends MethodLevelMutator {
         }
     }
 
-    private void corMutantGen(BinaryExpression exp, int op) {
-        BinaryExpression mutant;
+    private void corMutantGen(BinaryExpression exp, int op) throws ParseTreeException{
+        BinaryExpression original = new BinaryExpression(new Variable(InstConfig.varPrefix+(counter+2)),
+                exp.getOperator(), new Variable(InstConfig.varPrefix+(counter+3)));
+        BinaryExpression mutant = (BinaryExpression) (original.makeRecursiveCopy());
+
+        typeStack.add(getType(exp));
+        exprStack.add(original);
+        typeStack.add(getType(exp));
+        exprStack.add(mutant);
+        typeStack.add(getType(exp.getLeft()));
+        exprStack.add(exp.getLeft());
+        typeStack.add(getType(exp.getRight()));
+        exprStack.add(exp.getRight());
+        counter += 4;
+
         if ((op != BinaryExpression.LOGICAL_AND) && (op != BinaryExpression.BITAND)) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.LOGICAL_AND);
+
             outputToFile(exp, mutant);
         }
 
         if ((op != BinaryExpression.LOGICAL_OR) && (op != BinaryExpression.BITOR)) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.LOGICAL_OR);
+
             outputToFile(exp, mutant);
         }
 
         if (op != BinaryExpression.XOR) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.XOR);
+
             outputToFile(exp, mutant);
         }
+
+        pop(4);
     }
 
     /**
@@ -95,9 +107,15 @@ public class COR extends MethodLevelMutator {
 
         try {
             PrintWriter out = getPrintWriter(f_name);
-            COR_Writer writer = new COR_Writer(mutant_dir, out);
-            writer.setMutant(original, mutant);
+            //PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+            InstrumentationCodeWriter writer = new InstrumentationCodeWriter(mutant_dir, out);
+
+            writer.setBlock(mutBlock);
+            writer.setStatement(mutStatement);
+            writer.setExpression(mutExpression);
+            writer.setInstrument(genInstrument());
             writer.setMethodSignature(currentMethodSignature);
+
             comp_unit.accept(writer);
             out.flush();
             out.close();

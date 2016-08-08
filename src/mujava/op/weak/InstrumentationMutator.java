@@ -29,7 +29,7 @@ import mujava.MutationSystem;
  * @version 0.1a
  */
 
-public class InstrumentationMutator extends MethodLevelMutator{
+public abstract class InstrumentationMutator extends MethodLevelMutator{
     public InstrumentationMutator(FileEnvironment file_env, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
     }

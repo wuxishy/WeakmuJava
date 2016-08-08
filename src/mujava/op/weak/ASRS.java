@@ -79,27 +79,27 @@ public class ASRS extends InstrumentationMutator {
         if (!(op == AssignmentExpression.ADD)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.ADD);
-            instrumentate(p, AssignmentExpression.ADD, type);
+            genInstrument(p, AssignmentExpression.ADD, type);
         }
         if (!(op == AssignmentExpression.DIVIDE)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.DIVIDE);
-            instrumentate(p, AssignmentExpression.DIVIDE, type);
+            genInstrument(p, AssignmentExpression.DIVIDE, type);
         }
         if (!(op == AssignmentExpression.MULT)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.MULT);
-            instrumentate(p, AssignmentExpression.MULT, type);
+            genInstrument(p, AssignmentExpression.MULT, type);
         }
         if (!(op == AssignmentExpression.SUB)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.SUB);
-            instrumentate(p, AssignmentExpression.SUB, type);
+            genInstrument(p, AssignmentExpression.SUB, type);
         }
         if (!(op == AssignmentExpression.MOD)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.MOD);
-            instrumentate(p, AssignmentExpression.MOD, type);
+            genInstrument(p, AssignmentExpression.MOD, type);
         }
     }
 
@@ -112,17 +112,17 @@ public class ASRS extends InstrumentationMutator {
         if (!(op == AssignmentExpression.AND)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.AND);
-            instrumentate(p, AssignmentExpression.AND, type);
+            genInstrument(p, AssignmentExpression.AND, type);
         }
         if (!(op == AssignmentExpression.OR)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.OR);
-            instrumentate(p, AssignmentExpression.OR, type);
+            genInstrument(p, AssignmentExpression.OR, type);
         }
         if (!(op == AssignmentExpression.XOR)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.XOR);
-            instrumentate(p, AssignmentExpression.XOR, type);
+            genInstrument(p, AssignmentExpression.XOR, type);
         }
     }
 
@@ -135,43 +135,43 @@ public class ASRS extends InstrumentationMutator {
         if (!(op == AssignmentExpression.SHIFT_L)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.SHIFT_L);
-            instrumentate(p, AssignmentExpression.SHIFT_L, type);
+            genInstrument(p, AssignmentExpression.SHIFT_L, type);
         }
         if (!(op == AssignmentExpression.SHIFT_R)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.SHIFT_R);
-            instrumentate(p, AssignmentExpression.SHIFT_R, type);
+            genInstrument(p, AssignmentExpression.SHIFT_R, type);
         }
         if (!(op == AssignmentExpression.SHIFT_RR)) {
             mutant = (AssignmentExpression) (p.makeRecursiveCopy());
             mutant.setOperator(AssignmentExpression.SHIFT_RR);
-            instrumentate(p, AssignmentExpression.SHIFT_RR, type);
+            genInstrument(p, AssignmentExpression.SHIFT_RR, type);
         }
     }
 
 
-    public void instrumentate(AssignmentExpression original, int op_val, OJClass type) {
+    public void genInstrument(AssignmentExpression original, int op_val, OJClass type) {
         Instrument inst = new Instrument();
         inst.init.add(new VariableDeclaration(TypeName.forOJClass(type), 
-                    weakConfig.varPrefix + "RHS", original.getRight()));
+                    InstConfig.varPrefix + "RHS", original.getRight()));
 
         String op = opString[original.getOperator()];
         BinaryExpression a = new BinaryExpression(original.getLeft(), op, 
-                new Variable(weakConfig.varPrefix + "RHS"));
+                new Variable(InstConfig.varPrefix + "RHS"));
         inst.init.add(new VariableDeclaration(TypeName.forOJClass(type), 
-                    weakConfig.varPrefix + "ORIGINAL", a));
+                    InstConfig.varPrefix + "ORIGINAL", a));
         
         op = opString[op_val];
         BinaryExpression b = new BinaryExpression(original.getLeft(), op, 
-                new Variable(weakConfig.varPrefix + "RHS"));
+                new Variable(InstConfig.varPrefix + "RHS"));
         inst.init.add(new VariableDeclaration(TypeName.forOJClass(type), 
-                    weakConfig.varPrefix + "MUTANT", b));
+                    InstConfig.varPrefix + "MUTANT", b));
 
-        inst.addAssertion(weakConfig.varPrefix + "ORIGINAL",
-                weakConfig.varPrefix + "MUTANT");
+        inst.addAssertion(InstConfig.varPrefix + "ORIGINAL",
+                InstConfig.varPrefix + "MUTANT");
 
         AssignmentExpression assign = new AssignmentExpression(original.getLeft(), "=",
-                    new Variable(weakConfig.varPrefix + "ORIGINAL"));
+                    new Variable(InstConfig.varPrefix + "ORIGINAL"));
         inst.post.add(new ExpressionStatement(assign));
 
         outputToFile(original, inst);

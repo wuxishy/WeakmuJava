@@ -32,6 +32,8 @@ public class Instrument {
     public ArrayList<String> assertion;
     public StatementList post;
 
+    public String varName;
+
     public Instrument() {
         init = new StatementList();
         assertion = new ArrayList<String>();
@@ -45,7 +47,7 @@ public class Instrument {
 
     public void addFloatAssertion(String a, String b) {
         String if_t = (assertion.isEmpty()) ? "if (" : "else if (";
-        assertion.add(if_t + "Math.abs(" + a + " - " + b + ") > " + weakConfig.eps +
+        assertion.add(if_t + "Math.abs(" + a + " - " + b + ") > " + InstConfig.eps +
             ") throw new WeakKillException();");
     }
 
