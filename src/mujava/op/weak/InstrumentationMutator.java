@@ -34,8 +34,13 @@ public abstract class InstrumentationMutator extends MethodLevelMutator{
         super(file_env, comp_unit);
     }
 
+    // indicate which block was mutated
     protected Statement mutBlock;
+
+    // indicate which statement was mutated
     protected Statement mutStatement;
+
+    // indicate which expression was mutated
     protected Expression mutExpression;
 
     public void visit(DoWhileStatement p) throws ParseTreeException {

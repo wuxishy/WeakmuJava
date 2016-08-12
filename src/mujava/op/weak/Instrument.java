@@ -55,12 +55,14 @@ public class Instrument {
     // Tested up to Java 8, not guaranteed to work in future versions of Java.
     public static String exit = "if (true) throw new WeakLiveException();";
 
+    // throw this if the mutant is weakly killed
     public static class WeakKillException extends RuntimeException{
         public WeakKillException(){
             super("This mutant is weakly killed");
         }
     }
 
+    // throw this if this mutant cannot be weakly killed
     public static class WeakLiveException extends RuntimeException{
         public WeakLiveException(){
             super("This mutant is not weakly killed");

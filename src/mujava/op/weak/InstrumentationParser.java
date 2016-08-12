@@ -25,7 +25,11 @@ import java.util.Stack;
 import mujava.MutationSystem;
 
 /**
- * <p>Recursively </p>
+ * <p>Recursively evaluate an expression</p>
+ * <p>
+ * Refer to <a href=https://www.sharelatex.com/project/577c5c8abfe51f234ad0c329>the planning document</a>
+ * for exact details on the recursive parser
+ * </p>
  * @author Haoyuan Sun
  * @version 0.1a
  */
@@ -42,8 +46,10 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
     // count the number of extra variables being used
     protected int counter = 0;
 
+    // keep the operands of the expression in a stack
     protected Stack<OJClass> typeStack;
     protected Stack<Expression> exprStack;
+
     protected StatementList post;
 
     public void visit(BinaryExpression p) throws ParseTreeException {
@@ -76,6 +82,7 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
         pop(3);
     }
 
+    // combine typeStack and exprStack into a list of statements ready to be printed
     public Instrument genInstrument(){
         Instrument inst = new Instrument();
         for(int i = counter-1; i >= 0; --i){
@@ -89,6 +96,7 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
         return inst;
     }
 
+    // pop the top k elements in the expression stack
     protected void pop(int k){
         for(int i = 0; i < k; ++i){
             typeStack.pop();

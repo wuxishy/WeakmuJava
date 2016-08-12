@@ -152,15 +152,19 @@ public class ASRS extends InstrumentationMutator {
 
     public void genInstrument(AssignmentExpression original, int op_val, OJClass type) {
         Instrument inst = new Instrument();
+
+        // store the right hand side in a tmp variable
         inst.init.add(new VariableDeclaration(TypeName.forOJClass(type), 
                     InstConfig.varPrefix + "RHS", original.getRight()));
 
+        // compute the original expression
         String op = opString[original.getOperator()];
         BinaryExpression a = new BinaryExpression(original.getLeft(), op, 
                 new Variable(InstConfig.varPrefix + "RHS"));
         inst.init.add(new VariableDeclaration(TypeName.forOJClass(type), 
                     InstConfig.varPrefix + "ORIGINAL", a));
-        
+
+        // computer the mutated expression
         op = opString[op_val];
         BinaryExpression b = new BinaryExpression(original.getLeft(), op, 
                 new Variable(InstConfig.varPrefix + "RHS"));
@@ -170,6 +174,7 @@ public class ASRS extends InstrumentationMutator {
         inst.addAssertion(InstConfig.varPrefix + "ORIGINAL",
                 InstConfig.varPrefix + "MUTANT");
 
+        // assign the value to the left hand side
         AssignmentExpression assign = new AssignmentExpression(original.getLeft(), "=",
                     new Variable(InstConfig.varPrefix + "ORIGINAL"));
         inst.post.add(new ExpressionStatement(assign));
@@ -177,6 +182,7 @@ public class ASRS extends InstrumentationMutator {
         outputToFile(original, inst);
     }
 
+    // adapted from openjava's source code
     private static String[] opString = {"", "*", "/", "%", "+", "-", 
         "<<", ">>", ">>>", "&", "^", "|"};
 

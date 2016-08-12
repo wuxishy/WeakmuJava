@@ -40,8 +40,10 @@ public class COR extends InstrumentationParser {
      * each of the other logical operators
      */
     public void visit(BinaryExpression p) throws ParseTreeException {
+        // first recursively search down the parse tree
         super.visit(p);
 
+        // mutant the current binary operator
         if ((getType(p.getLeft()) == OJSystem.BOOLEAN) &&
                 (getType(p.getRight()) == OJSystem.BOOLEAN)) {
             int op_type = p.getOperator();

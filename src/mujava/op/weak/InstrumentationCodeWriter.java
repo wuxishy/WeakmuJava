@@ -49,7 +49,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     // instrumentation code
     private Instrument inst;
 
-    // rename variables for for loops
+    // rename variables in for loops
     private ArrayList<String> itName;
 
     public InstrumentationCodeWriter(PrintWriter out) {
@@ -113,10 +113,12 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     }
 
     public void visit(DoWhileStatement p) throws ParseTreeException {
+        // do nothing special if the mutant is not in this block
         if(!isSameObject(mutBlock, p)){
             super.visit(p);
             return;
         }
+        // if the mutant is in this block, exit the program after the loop is done
         if(!isSameObject(mutStatement, p)){
             super.visit(p);
             writeString(Instrument.exit);
@@ -124,8 +126,10 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
             line_num++;
             return;
         }
-        writeTab();
 
+        // otherwise, the mutant is the conditional statement of this loop
+
+        writeTab();
         out.println("while (true) {");
         line_num++;
         pushNest();
@@ -135,10 +139,14 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         out.println();
         line_num++;
 
+        super.visit(inst.init);
+        for (String str : inst.assertion) writeString(str);
+        super.visit(inst.post);
+
         writeTab();
-        out.print("if (!(");
-        p.getExpression().accept(this);
-        out.print(")) break");
+        out.print("if (!");;
+        out.print(inst.varName);
+        out.print(") break");
         out.println(";");
         line_num++;
 
@@ -167,10 +175,13 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     }
 
     public void visit(ForStatement p) throws ParseTreeException {
+        // do nothing special if the mutant is not in this block
         if (!isSameObject(mutBlock, p)) {
             super.visit(p);
             return;
-        } else if (!isSameObject(mutStatement, p)){
+        }
+        // if the mutant is in this block, exit the program after the loop is done
+        if (!isSameObject(mutStatement, p)){
             super.visit(p);
             writeString(Instrument.exit);
             out.println();
@@ -260,6 +271,8 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     public void visit(Variable p) throws ParseTreeException {
         String name = p.toString();
 
+        // if the variable is declared in for-loop initialization statement
+        // its name must mangled to avoid collision
         if (itName != null){
             for(int i = 0; i < itName.size(); ++i)
                 if (itName.get(i).equals(name)) {
@@ -271,10 +284,12 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     }
 
     public void visit(WhileStatement p) throws ParseTreeException {
+        // do nothing special if the mutant is not in this block
         if(!isSameObject(mutBlock, p)){
             super.visit(p);
             return;
         }
+        // if the mutant is in this block, exit the program after the loop is done
         if(!isSameObject(mutStatement, p)){
             super.visit(p);
             writeString(Instrument.exit);
@@ -282,8 +297,10 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
             line_num++;
             return;
         }
-        writeTab();
 
+        // otherwise, the mutant is the conditional statement of this loop
+
+        writeTab();
         out.println("while (true) {");
         line_num++;
         pushNest();
@@ -314,6 +331,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         line_num++;
     }
 
+    // write a string that denotes a single line of code
     private void writeString(String str) {
         writeTab();
 
@@ -321,6 +339,8 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         line_num++;
     }
 
+    // defined a variable with a different name
+    // only for for-loop
     private void writeNewName(VariableDeclarator p, int index)
             throws ParseTreeException{
         out.print(InstConfig.varPrefix + "FOR_" + index);
