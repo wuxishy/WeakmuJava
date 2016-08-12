@@ -53,6 +53,8 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
     protected StatementList post;
 
     public void visit(BinaryExpression p) throws ParseTreeException {
+        if (mutExpression == null) mutExpression = p;
+
         typeStack.add(getType(p));
         exprStack.add(new BinaryExpression(new Variable(InstConfig.varPrefix+(counter+3)), p.getOperator(),
                 new Variable(InstConfig.varPrefix+(counter+2)))); // +0
@@ -80,6 +82,8 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
         p.getRight().accept(this);
 
         pop(3);
+
+        if (mutExpression == p) mutExpression = null;
     }
 
     // combine typeStack and exprStack into a list of statements ready to be printed

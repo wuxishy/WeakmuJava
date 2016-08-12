@@ -43,7 +43,9 @@ public class COR extends InstrumentationParser {
         // first recursively search down the parse tree
         super.visit(p);
 
-        // mutant the current binary operator
+        // mutate the current binary operator
+        if (mutExpression == null) mutExpression = p;
+
         if ((getType(p.getLeft()) == OJSystem.BOOLEAN) &&
                 (getType(p.getRight()) == OJSystem.BOOLEAN)) {
             int op_type = p.getOperator();
@@ -55,21 +57,23 @@ public class COR extends InstrumentationParser {
                 corMutantGen(p, op_type);
             }
         }
+
+        if (mutExpression == p) mutExpression = null;
     }
 
     private void corMutantGen(BinaryExpression exp, int op) throws ParseTreeException{
-        BinaryExpression original = new BinaryExpression(new Variable(InstConfig.varPrefix+(counter+2)),
-                exp.getOperator(), new Variable(InstConfig.varPrefix+(counter+3)));
+        BinaryExpression original = new BinaryExpression(new Variable(InstConfig.varPrefix+(counter+3)),
+                exp.getOperator(), new Variable(InstConfig.varPrefix+(counter+2)));
         BinaryExpression mutant = (BinaryExpression) (original.makeRecursiveCopy());
 
         typeStack.add(getType(exp));
         exprStack.add(original);
         typeStack.add(getType(exp));
         exprStack.add(mutant);
-        typeStack.add(getType(exp.getLeft()));
-        exprStack.add(exp.getLeft());
         typeStack.add(getType(exp.getRight()));
         exprStack.add(exp.getRight());
+        typeStack.add(getType(exp.getLeft()));
+        exprStack.add(exp.getLeft());
         counter += 4;
 
         if ((op != BinaryExpression.LOGICAL_AND) && (op != BinaryExpression.BITAND)) {

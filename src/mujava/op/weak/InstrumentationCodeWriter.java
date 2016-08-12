@@ -211,6 +211,11 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
                 tspec.accept(this);
                 out.print(" ");
                 itName.add(vdecls[i].getVariable());
+                if(isSameObject(vdecls[i].getInitializer(), mutExpression)) {
+                    super.visit(inst.init);
+                    for (String str : inst.assertion) writeString(str);
+                    super.visit(inst.post);
+                }
                 writeNewName(vdecls[i], i);
                 out.println(";");
                 line_num++;
@@ -223,12 +228,24 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         pushNest();
 
         Expression expr = p.getCondition();
-        if (expr != null) {
+        if(isSameObject(expr, mutExpression)){
+            super.visit(inst.init);
+            for (String str : inst.assertion) writeString(str);
+            super.visit(inst.post);
+
+            writeTab();
+            out.print("if (!");;
+            out.print(inst.varName);
+            out.print(") break");
+            out.println(";");
+            line_num++;
+        } else if (expr != null) {
             writeTab();
             out.print("if (!(");
             expr.accept(this);
             out.print(")) break");
         }
+
 
         out.println(";");
         line_num++;
@@ -266,6 +283,40 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         line_num++;
 
         itName = null;
+    }
+
+    public void visit(IfStatement p) throws ParseTreeException {
+        if(!isSameObject(p, mutStatement)){
+            super.visit(p);
+            return;
+        }
+
+        // the mutant is the conditional statement
+        out.println();
+        line_num++;
+        super.visit(inst.init);
+        for (String str : inst.assertion) writeString(str);
+        super.visit(inst.post);
+        if(mutBlock == null) writeString(Instrument.exit);
+
+        writeTab();
+        out.print("if (");;
+        out.print(inst.varName);
+        out.print(") ");
+
+        /* then part */
+        StatementList stmts = p.getStatements();
+        writeStatementsBlock(stmts);
+
+        /* else part */
+        StatementList elsestmts = p.getElseStatements();
+        if (!elsestmts.isEmpty()) {
+            out.print(" else ");
+            writeStatementsBlock(elsestmts);
+        }
+
+        out.println();
+        line_num++;
     }
 
     public void visit(Variable p) throws ParseTreeException {
@@ -352,7 +403,8 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         VariableInitializer varinit = p.getInitializer();
         if (varinit != null) {
             out.print(" = ");
-            varinit.accept(this);
+            if (isSameObject(varinit, mutExpression)) out.print(inst.varName);
+            else varinit.accept(this);
         }
     }
 }
