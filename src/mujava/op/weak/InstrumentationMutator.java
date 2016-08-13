@@ -34,6 +34,9 @@ public abstract class InstrumentationMutator extends MethodLevelMutator{
         super(file_env, comp_unit);
     }
 
+    // indicate the outter most block which encloses the mutant
+    protected Statement encBlock;
+
     // indicate which block was mutated
     protected Statement mutBlock;
 
@@ -50,6 +53,8 @@ public abstract class InstrumentationMutator extends MethodLevelMutator{
             return;
         }
 
+        if(encBlock == null) encBlock = p;
+
         mutBlock = p;
         mutStatement = p;
 
@@ -60,6 +65,8 @@ public abstract class InstrumentationMutator extends MethodLevelMutator{
         p.getStatements().accept(this);
 
         mutBlock = null;
+
+        if(encBlock == p) encBlock = null;
 
         newp = this.evaluateUp(p);
         if (newp != p) {
@@ -95,6 +102,8 @@ public abstract class InstrumentationMutator extends MethodLevelMutator{
             return;
         }
 
+        if(encBlock == null) encBlock = p;
+
         mutBlock = p;
 
         ExpressionList init = p.getInit();
@@ -120,6 +129,8 @@ public abstract class InstrumentationMutator extends MethodLevelMutator{
         p.getStatements().accept(this);
 
         mutBlock = null;
+
+        if(encBlock == p) encBlock = null;
 
         newp = this.evaluateUp(p);
         if (newp != p) {
@@ -179,6 +190,8 @@ public abstract class InstrumentationMutator extends MethodLevelMutator{
             return;
         }
 
+        if(encBlock == null) encBlock = p;
+
         mutBlock = p;
         mutStatement = p;
 
@@ -189,6 +202,8 @@ public abstract class InstrumentationMutator extends MethodLevelMutator{
         p.getStatements().accept(this);
 
         mutBlock = null;
+
+        if(encBlock == p) encBlock = null;
 
         newp = this.evaluateUp(p);
         if (newp != p) {

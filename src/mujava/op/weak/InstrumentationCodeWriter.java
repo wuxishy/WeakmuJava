@@ -37,6 +37,9 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     // 1 -- always killed, 2 -- always live, 0 -- run test
     private int preKill = 0;
 
+    // indicate the outter most block which encloses the mutant
+    private Statement encBlock;
+
     // indicate which block was mutated
     private Statement mutBlock;
 
@@ -61,6 +64,8 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     }
 
     public void setPreKill(int p) { preKill = p; }
+
+    public void setEnclose(Statement s) { encBlock = s; }
 
     public void setBlock(Statement s) { mutBlock = s; }
 
@@ -113,17 +118,10 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     }
 
     public void visit(DoWhileStatement p) throws ParseTreeException {
-        // do nothing special if the mutant is not in this block
-        if(!isSameObject(mutBlock, p)){
+        // do nothing special if the mutant is not in the control predicate
+        if (!isSameObject(mutStatement, p)) {
             super.visit(p);
-            return;
-        }
-        // if the mutant is in this block, exit the program after the loop is done
-        if(!isSameObject(mutStatement, p)){
-            super.visit(p);
-            writeString(Instrument.exit);
-            out.println();
-            line_num++;
+            writeExit(p);
             return;
         }
 
@@ -155,9 +153,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         out.println("}");
         line_num++;
 
-        writeString(Instrument.exit);
-        out.println();
-        line_num++;
+        writeExit(p);
     }
 
     public void visit(ExpressionStatement p) throws ParseTreeException {
@@ -175,17 +171,10 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     }
 
     public void visit(ForStatement p) throws ParseTreeException {
-        // do nothing special if the mutant is not in this block
-        if (!isSameObject(mutBlock, p)) {
+        // do nothing special if the mutant is not in the control predicate
+        if (!isSameObject(mutStatement, p)) {
             super.visit(p);
-            return;
-        }
-        // if the mutant is in this block, exit the program after the loop is done
-        if (!isSameObject(mutStatement, p)){
-            super.visit(p);
-            writeString(Instrument.exit);
-            out.println();
-            line_num++;
+            writeExit(p);
             return;
         }
 
@@ -278,9 +267,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         out.println("}");
         line_num++;
 
-        writeString(Instrument.exit);
-        out.println();
-        line_num++;
+        writeExit(p);
 
         itName = null;
     }
@@ -335,17 +322,10 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     }
 
     public void visit(WhileStatement p) throws ParseTreeException {
-        // do nothing special if the mutant is not in this block
-        if(!isSameObject(mutBlock, p)){
+        // do nothing special if the mutant is not in the control predicate
+        if (!isSameObject(mutStatement, p)) {
             super.visit(p);
-            return;
-        }
-        // if the mutant is in this block, exit the program after the loop is done
-        if(!isSameObject(mutStatement, p)){
-            super.visit(p);
-            writeString(Instrument.exit);
-            out.println();
-            line_num++;
+            writeExit(p);
             return;
         }
 
@@ -377,9 +357,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         out.println("}");
         line_num++;
 
-        writeString(Instrument.exit);
-        out.println();
-        line_num++;
+        writeExit(p);
     }
 
     // write a string that denotes a single line of code
@@ -405,6 +383,14 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
             out.print(" = ");
             if (isSameObject(varinit, mutExpression)) out.print(inst.varName);
             else varinit.accept(this);
+        }
+    }
+
+    private void writeExit(Statement p){
+        if(isSameObject(p, encBlock)) {
+            writeString(Instrument.exit);
+            out.println();
+            line_num++;
         }
     }
 }

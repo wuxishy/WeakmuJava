@@ -116,6 +116,7 @@ public class COR extends InstrumentationParser {
             //PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
             InstrumentationCodeWriter writer = new InstrumentationCodeWriter(mutant_dir, out);
 
+            writer.setEnclose(encBlock);
             writer.setBlock(mutBlock);
             writer.setStatement(mutStatement);
             writer.setExpression(mutExpression);

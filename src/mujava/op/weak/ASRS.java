@@ -206,6 +206,7 @@ public class ASRS extends InstrumentationMutator {
             InstrumentationCodeWriter writer =
                     new InstrumentationCodeWriter(mutant_dir, out);
 
+            writer.setEnclose(encBlock);
             writer.setBlock(mutBlock);
             writer.setStatement(mutStatement);
             writer.setExpression(mutExpression);
