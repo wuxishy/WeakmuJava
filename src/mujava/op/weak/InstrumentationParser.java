@@ -20,9 +20,10 @@ import openjava.mop.*;
 import openjava.ptree.*;
 
 import java.io.*;
-import java.util.Stack;
+import java.util.*;
 
 import mujava.MutationSystem;
+import openjava.ptree.Expression;
 
 /**
  * <p>Recursively evaluate an expression</p>
@@ -55,12 +56,13 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
     public void visit(BinaryExpression p) throws ParseTreeException {
         if (mutExpression == null) mutExpression = p;
 
+        // original
         typeStack.add(getType(p));
-        exprStack.add(new BinaryExpression(new Variable(InstConfig.varPrefix+(counter+3)), p.getOperator(),
-                new Variable(InstConfig.varPrefix+(counter+2)))); // +0
+        exprStack.add(new BinaryExpression(genVar(counter+3), p.getOperator(), genVar(counter+2))); // +0
+        // mutant
         typeStack.add(getType(p));
-        exprStack.add(new BinaryExpression(new Variable(InstConfig.varPrefix+(counter+4)), p.getOperator(),
-                new Variable(InstConfig.varPrefix+(counter+2)))); // +1
+        exprStack.add(new BinaryExpression(genVar(counter+4), p.getOperator(), genVar(counter+2))); // +1
+        // RHS
         typeStack.add(getType(p.getRight()));
         exprStack.add(p.getRight()); // +2
 
@@ -69,12 +71,13 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
 
         pop(3);
 
+        // original
         typeStack.add(getType(p));
-        exprStack.add(new BinaryExpression(new Variable(InstConfig.varPrefix+(counter+2)), p.getOperator(),
-                new Variable(InstConfig.varPrefix+(counter+3)))); // +0
+        exprStack.add(new BinaryExpression(genVar(counter+2), p.getOperator(), genVar(counter+3))); // +0
+        // mutant
         typeStack.add(getType(p));
-        exprStack.add(new BinaryExpression(new Variable(InstConfig.varPrefix+(counter+2)), p.getOperator(),
-                new Variable(InstConfig.varPrefix+(counter+4)))); // +1
+        exprStack.add(new BinaryExpression(genVar(counter+2), p.getOperator(), genVar(counter+4))); // +1
+        // LHS
         typeStack.add(getType(p.getLeft()));
         exprStack.add(p.getLeft()); // +2
 
@@ -83,15 +86,86 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
 
         pop(3);
 
-        if (mutExpression == p) mutExpression = null;
+        if (mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
+    }
+
+    public void visit(MethodCall p) throws ParseTreeException {
+        if(mutExpression == null) mutExpression = p;
+
+        // the method is static if the reference is a type instead of expression
+        boolean isStatic = (p.getReferenceExpr() == null);
+        // list of arguments
+        ExpressionList args = p.getArguments();
+        // number of arguments in this method
+        int arg_size = args.size();
+
+        // replace the list of arguments with tmp variables
+        ExpressionList origArgs = new ExpressionList();
+        ExpressionList mutArgs = new ExpressionList();
+        for(int i = 0; i < arg_size; ++i){
+            Variable tmp = genVar(counter+2+i);
+            origArgs.add(tmp);
+            mutArgs.add(tmp);
+        }
+
+        // original
+        MethodCall orig = isStatic ? new MethodCall(p.getReferenceType(), p.getName(), origArgs) :
+                                     new MethodCall(p.getReferenceExpr(), p.getName(), origArgs);
+        typeStack.add(getType(p));
+        exprStack.add(orig); // +0
+        // mutant
+        MethodCall mut = isStatic ? new MethodCall(p.getReferenceType(), p.getName(), mutArgs) :
+                                    new MethodCall(p.getReferenceExpr(), p.getName(), mutArgs);
+        typeStack.add(getType(p));
+        exprStack.add(mut); // +1
+
+        // assign the original list of arguments to tmp variables
+        for(int i = 0; i < arg_size; ++i){
+            typeStack.add(getType(args.get(i)));
+            exprStack.add(args.get(i));
+        }
+        //System.out.println(exprStack.size());
+        //System.out.println(counter);
+        counter += arg_size + 2;
+
+        // more mutants may be in the reference expression
+        if(!isStatic) p.getReferenceExpr().accept(this);
+
+        // mutants in the arguments
+        Variable tmpvar = null;
+        Expression tmpexpr = null;
+
+        Variable nextOrig = genVar(counter);
+        Variable nextMut = genVar(counter+1);
+        for(int i = 0; i < arg_size; ++i){
+            // mutate
+            tmpvar = (Variable)origArgs.get(i);
+            tmpexpr = exprStack.get(counter-arg_size+i);
+
+            origArgs.set(i, nextOrig);
+            mutArgs.set(i, nextMut);
+            exprStack.set(counter-arg_size+i, null);
+
+            args.get(i).accept(this);
+
+            // restore
+            origArgs.set(i, tmpvar);
+            mutArgs.set(i, tmpvar);
+            exprStack.set(counter-arg_size+i, tmpexpr);
+        }
+
+        pop(arg_size + 2);
+
+        if (mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
     // combine typeStack and exprStack into a list of statements ready to be printed
     public Instrument genInstrument(){
         Instrument inst = new Instrument();
         for(int i = counter-1; i >= 0; --i){
+            if(exprStack.get(i) == null) continue;
             inst.init.add(new VariableDeclaration(TypeName.forOJClass(typeStack.get(i)),
-                    InstConfig.varPrefix+i, exprStack.get(i)));
+                                                  InstConfig.varPrefix+i, exprStack.get(i)));
         }
         inst.addAssertion(InstConfig.varPrefix+0, InstConfig.varPrefix+1);
         inst.post = post;
@@ -107,5 +181,10 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
             exprStack.pop();
             --counter;
         }
+    }
+
+    // generate a variable with name in the form of prefix+number
+    protected Variable genVar(int i){
+        return new Variable(InstConfig.varPrefix + i);
     }
 }

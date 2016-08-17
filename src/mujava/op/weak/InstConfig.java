@@ -26,5 +26,5 @@ public class InstConfig {
     public static double eps = 1e-5;
 
     // instrumentation variable prefix
-    public static String varPrefix = "MU_WEAKINST_";
+    public static String varPrefix = "WEAKINST_";
 }

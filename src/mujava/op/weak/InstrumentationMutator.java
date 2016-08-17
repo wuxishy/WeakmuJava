@@ -66,7 +66,7 @@ public abstract class InstrumentationMutator extends MethodLevelMutator{
 
         mutBlock = null;
 
-        if(encBlock == p) encBlock = null;
+        if(encBlock.getObjectID() == p.getObjectID()) encBlock = null;
 
         newp = this.evaluateUp(p);
         if (newp != p) {
@@ -130,7 +130,7 @@ public abstract class InstrumentationMutator extends MethodLevelMutator{
 
         mutBlock = null;
 
-        if(encBlock == p) encBlock = null;
+        if(encBlock.getObjectID() == p.getObjectID()) encBlock = null;
 
         newp = this.evaluateUp(p);
         if (newp != p) {
@@ -203,7 +203,7 @@ public abstract class InstrumentationMutator extends MethodLevelMutator{
 
         mutBlock = null;
 
-        if(encBlock == p) encBlock = null;
+        if(encBlock.getObjectID() == p.getObjectID()) encBlock = null;
 
         newp = this.evaluateUp(p);
         if (newp != p) {

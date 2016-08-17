@@ -164,7 +164,7 @@ public class ASRS extends InstrumentationMutator {
         inst.init.add(new VariableDeclaration(TypeName.forOJClass(type), 
                     InstConfig.varPrefix + "ORIGINAL", a));
 
-        // computer the mutated expression
+        // compute the mutated expression
         op = opString[op_val];
         BinaryExpression b = new BinaryExpression(original.getLeft(), op, 
                 new Variable(InstConfig.varPrefix + "RHS"));

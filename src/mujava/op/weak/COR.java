@@ -58,22 +58,25 @@ public class COR extends InstrumentationParser {
             }
         }
 
-        if (mutExpression == p) mutExpression = null;
+        if (mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
     private void corMutantGen(BinaryExpression exp, int op) throws ParseTreeException{
-        BinaryExpression original = new BinaryExpression(new Variable(InstConfig.varPrefix+(counter+3)),
-                exp.getOperator(), new Variable(InstConfig.varPrefix+(counter+2)));
+        BinaryExpression original = new BinaryExpression(genVar(counter+3), exp.getOperator(), genVar(counter+2));
         BinaryExpression mutant = (BinaryExpression) (original.makeRecursiveCopy());
 
+        // original
         typeStack.add(getType(exp));
-        exprStack.add(original);
+        exprStack.add(original); // +0
+        // mutant
         typeStack.add(getType(exp));
-        exprStack.add(mutant);
+        exprStack.add(mutant); // +1
+        // RHS
         typeStack.add(getType(exp.getRight()));
-        exprStack.add(exp.getRight());
+        exprStack.add(exp.getRight()); // +2
+        // LHS
         typeStack.add(getType(exp.getLeft()));
-        exprStack.add(exp.getLeft());
+        exprStack.add(exp.getLeft()); // +3
         counter += 4;
 
         if ((op != BinaryExpression.LOGICAL_AND) && (op != BinaryExpression.BITAND)) {
