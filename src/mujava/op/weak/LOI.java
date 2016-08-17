@@ -36,13 +36,13 @@ public class LOI extends Arithmetic_OP {
 
     public void visit(Variable p) throws ParseTreeException {
         if (isArithmeticType(p)) {
-            outputToFile(p);
+            loiMutantGen(p);
         }
     }
 
     public void visit(FieldAccess p) throws ParseTreeException {
         if (isArithmeticType(p)) {
-            outputToFile(p);
+            loiMutantGen(p);
         }
     }
 
@@ -59,53 +59,47 @@ public class LOI extends Arithmetic_OP {
         rexp.accept(this);
     }
 
-    /**
-     * Output LOI mutants to files
-     * @param original_field
-     */
-    public void outputToFile(FieldAccess original_field) {
-        if (comp_unit == null)
-            return;
+    private void loiMutantGen(Expression p){
+        // original
+        typeStack.add(OJSystem.BOOLEAN);
+        exprStack.add(genVar(counter+2)); // +0
+        // mutant
+        typeStack.add(OJSystem.BOOLEAN);
+        exprStack.add(new UnaryExpression(genVar(counter+2), UnaryExpression.NOT)); // +1
+        // expression
+        typeStack.add(OJSystem.BOOLEAN);
+        exprStack.add(p); // +2
+        counter += 3;
 
-        String f_name;
-        num++;
-        f_name = getSourceName("LOI");
-        String mutant_dir = getMuantID("LOI");
+        outputToFile();
 
-        try {
-            PrintWriter out = getPrintWriter(f_name);
-            LOI_Writer writer = new LOI_Writer(mutant_dir, out);
-            writer.setMutant(original_field);
-            writer.setMethodSignature(currentMethodSignature);
-            comp_unit.accept(writer);
-            out.flush();
-            out.close();
-        } catch (IOException e) {
-            System.err.println("fails to create " + f_name);
-        } catch (ParseTreeException e) {
-            System.err.println("errors during printing " + f_name);
-            e.printStackTrace();
-        }
+        pop(3);
     }
 
     /**
      * Output LOI mutants to files
-     * @param original_var
      */
-    public void outputToFile(Variable original_var) {
+    public void outputToFile() {
         if (comp_unit == null)
             return;
 
         String f_name;
         num++;
-        f_name = getSourceName("LOI");
-        String mutant_dir = getMuantID("LOI");
+        f_name = getSourceName("COI");
+        String mutant_dir = getMuantID("COI");
 
         try {
             PrintWriter out = getPrintWriter(f_name);
-            LOI_Writer writer = new LOI_Writer(mutant_dir, out);
-            writer.setMutant(original_var);
+            //PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+            InstrumentationCodeWriter writer = new InstrumentationCodeWriter(mutant_dir, out);
+
+            writer.setEnclose(encBlock);
+            writer.setBlock(mutBlock);
+            writer.setStatement(mutStatement);
+            writer.setExpression(mutExpression);
+            writer.setInstrument(genInstrument());
             writer.setMethodSignature(currentMethodSignature);
+
             comp_unit.accept(writer);
             out.flush();
             out.close();

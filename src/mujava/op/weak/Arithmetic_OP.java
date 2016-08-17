@@ -24,7 +24,7 @@ import openjava.ptree.*;
  * @version 1.0
  */
 
-public class Arithmetic_OP extends MethodLevelMutator {
+public class Arithmetic_OP extends InstrumentationParser {
     public Arithmetic_OP(FileEnvironment file_env, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
     }

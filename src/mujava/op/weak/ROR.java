@@ -38,10 +38,11 @@ public class ROR extends Arithmetic_OP {
     }
 
     public void visit(BinaryExpression p) throws ParseTreeException {
-        Expression left = p.getLeft();
-        left.accept(this);
-        Expression right = p.getRight();
-        right.accept(this);
+        // first recursively search down the parse tree
+        super.visit(p);
+
+        // mutate the current binary operator
+        if (mutExpression == null) mutExpression = p;
 
         int op_type = p.getOperator();
 
@@ -56,61 +57,86 @@ public class ROR extends Arithmetic_OP {
         } else if ((op_type == BinaryExpression.EQUAL) || (op_type == BinaryExpression.NOTEQUAL)) {
             objectRORMutantGen(p, op_type);
         }
+
+        if (mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
-    private void primitiveRORMutantGen(BinaryExpression exp, int op) {
-        BinaryExpression mutant;
+    private void primitiveRORMutantGen(BinaryExpression exp, int op) throws ParseTreeException{
+        BinaryExpression original = new BinaryExpression(genVar(counter+3), op, genVar(counter+2));
+        BinaryExpression mutant = (BinaryExpression) (original.makeRecursiveCopy());
+
+        // original
+        typeStack.add(OJSystem.BOOLEAN);
+        exprStack.add(original); // +0
+        // mutant
+        typeStack.add(OJSystem.BOOLEAN);
+        exprStack.add(mutant); // +1
+        // RHS
+        typeStack.add(getType(exp.getRight()));
+        exprStack.add(exp.getRight()); // +2
+        // LHS
+        typeStack.add(getType(exp.getLeft()));
+        exprStack.add(exp.getLeft()); // +3
+        counter += 4;
 
         /**
          * the traditional ROR implementation
          */
 
         if (op != BinaryExpression.GREATER) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.GREATER);
+
             outputToFile(exp, mutant);
         }
 
         if (op != BinaryExpression.GREATEREQUAL) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.GREATEREQUAL);
+
             outputToFile(exp, mutant);
         }
 
         if (op != BinaryExpression.LESS) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.LESS);
+
             outputToFile(exp, mutant);
         }
 
         if (op != BinaryExpression.LESSEQUAL) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.LESSEQUAL);
+
             outputToFile(exp, mutant);
         }
 
         if (op != BinaryExpression.EQUAL) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.EQUAL);
+
             outputToFile(exp, mutant);
         }
 
         if (op != BinaryExpression.NOTEQUAL) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.NOTEQUAL);
+
             outputToFile(exp, mutant);
         }
 
+        pop(4);
+
         //Complete the full implementation of ROR
         //Note here the mutant is a type of Literal not a binary expression
-        //Updated by Nan Li
-        //Dec 6 2011
 
+        // original
+        typeStack.add(OJSystem.BOOLEAN);
+        exprStack.add((BinaryExpression)exp.makeRecursiveCopy()); // +0
         //Change the expression to true
-        outputToFile(exp, Literal.makeLiteral(true));
+        typeStack.add(OJSystem.BOOLEAN);
+        exprStack.add(Literal.constantTrue());
+        outputToFile(exp, mutant);
+        pop(1);
         //Change the expression to false
-        outputToFile(exp, Literal.makeLiteral(false));
-
+        typeStack.add(OJSystem.BOOLEAN);
+        exprStack.add(Literal.constantFalse());
+        outputToFile(exp, mutant);
+        pop(2);
 
         /**
          * New implementation of ROR based on the fault hierarchies
@@ -219,19 +245,37 @@ public class ROR extends Arithmetic_OP {
       */
     }
 
-    private void objectRORMutantGen(BinaryExpression exp, int op) {
-        BinaryExpression mutant;
+    private void objectRORMutantGen(BinaryExpression exp, int op) throws ParseTreeException{
+        BinaryExpression original = new BinaryExpression(genVar(counter+3), op, genVar(counter+2));
+        BinaryExpression mutant = (BinaryExpression) (original.makeRecursiveCopy());
+
+        // original
+        typeStack.add(getType(exp));
+        exprStack.add(original); // +0
+        // mutant
+        typeStack.add(getType(exp));
+        exprStack.add(mutant); // +1
+        // RHS
+        typeStack.add(getType(exp.getRight()));
+        exprStack.add(exp.getRight()); // +2
+        // LHS
+        typeStack.add(getType(exp.getLeft()));
+        exprStack.add(exp.getLeft()); // +3
+        counter += 4;
+
         if (op != BinaryExpression.EQUAL) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.EQUAL);
+
             outputToFile(exp, mutant);
         }
 
         if (op != BinaryExpression.NOTEQUAL) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.NOTEQUAL);
+
             outputToFile(exp, mutant);
         }
+
+        pop(4);
     }
 
     /**
@@ -240,36 +284,6 @@ public class ROR extends Arithmetic_OP {
      * @param mutant
      */
     public void outputToFile(BinaryExpression original, BinaryExpression mutant) {
-        if (comp_unit == null)
-            return;
-
-        String f_name;
-        num++;
-        f_name = getSourceName("ROR");
-        String mutant_dir = getMuantID("ROR");
-
-        try {
-            PrintWriter out = getPrintWriter(f_name);
-            ROR_Writer writer = new ROR_Writer(mutant_dir, out);
-            writer.setMutant(original, mutant);
-            writer.setMethodSignature(currentMethodSignature);
-            comp_unit.accept(writer);
-            out.flush();
-            out.close();
-        } catch (IOException e) {
-            System.err.println("fails to create " + f_name);
-        } catch (ParseTreeException e) {
-            System.err.println("errors during printing " + f_name);
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Output ROR mutants (true or false) to files
-     * @param original
-     * @param mutant
-     */
-    public void outputToFile(BinaryExpression original, Literal mutant) {
         if (comp_unit == null)
             return;
 

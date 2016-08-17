@@ -62,7 +62,7 @@ public class COR extends InstrumentationParser {
     }
 
     private void corMutantGen(BinaryExpression exp, int op) throws ParseTreeException{
-        BinaryExpression original = new BinaryExpression(genVar(counter+3), exp.getOperator(), genVar(counter+2));
+        BinaryExpression original = new BinaryExpression(genVar(counter+3), op, genVar(counter+2));
         BinaryExpression mutant = (BinaryExpression) (original.makeRecursiveCopy());
 
         // original

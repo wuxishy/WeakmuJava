@@ -17,6 +17,7 @@ package mujava.op.weak;
 
 import openjava.mop.*;
 import openjava.ptree.*;
+import openjava.ptree.Expression;
 
 import java.io.*;
 
@@ -30,7 +31,7 @@ import java.io.*;
  * @version 1.0
  */
 
-public class COI extends MethodLevelMutator {
+public class COI extends InstrumentationParser {
     public COI(FileEnvironment file_env, ClassDeclaration cdecl, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
     }
@@ -41,32 +42,49 @@ public class COI extends MethodLevelMutator {
 
     public void visit(Variable p) throws ParseTreeException {
         if (getType(p) == OJSystem.BOOLEAN) {
-            outputToFile(p);
+            coiMutantGen(p);
         }
     }
 
     public void visit(FieldAccess p) throws ParseTreeException {
         if (getType(p) == OJSystem.BOOLEAN) {
-            outputToFile(p);
+            coiMutantGen(p);
         }
     }
 
     public void visit(BinaryExpression p) throws ParseTreeException {
-        Expression left = p.getLeft();
-        left.accept(this);
-        Expression right = p.getRight();
-        right.accept(this);
+        super.visit(p);
+
+        if (mutExpression == null) mutExpression = p;
 
         if (getType(p) == OJSystem.BOOLEAN) {
-            outputToFile(p);
+            coiMutantGen(p);
         }
+
+        if(mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
+    }
+
+    private void coiMutantGen(Expression p){
+        // original
+        typeStack.add(OJSystem.BOOLEAN);
+        exprStack.add(genVar(counter+2)); // +0
+        // mutant
+        typeStack.add(OJSystem.BOOLEAN);
+        exprStack.add(new UnaryExpression(genVar(counter+2), UnaryExpression.NOT)); // +1
+        // expression
+        typeStack.add(OJSystem.BOOLEAN);
+        exprStack.add(p); // +2
+        counter += 3;
+
+        outputToFile();
+
+        pop(3);
     }
 
     /**
      * Output COI mutants to files
-     * @param original
      */
-    public void outputToFile(BinaryExpression original) {
+    public void outputToFile() {
         if (comp_unit == null)
             return;
 
@@ -77,66 +95,16 @@ public class COI extends MethodLevelMutator {
 
         try {
             PrintWriter out = getPrintWriter(f_name);
-            COI_Writer writer = new COI_Writer(mutant_dir, out);
-            writer.setMutant(original);
+            //PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+            InstrumentationCodeWriter writer = new InstrumentationCodeWriter(mutant_dir, out);
+
+            writer.setEnclose(encBlock);
+            writer.setBlock(mutBlock);
+            writer.setStatement(mutStatement);
+            writer.setExpression(mutExpression);
+            writer.setInstrument(genInstrument());
             writer.setMethodSignature(currentMethodSignature);
-            comp_unit.accept(writer);
-            out.flush();
-            out.close();
-        } catch (IOException e) {
-            System.err.println("fails to create " + f_name);
-        } catch (ParseTreeException e) {
-            System.err.println("errors during printing " + f_name);
-            e.printStackTrace();
-        }
-    }
 
-    /**
-     * Output COI mutants to files
-     * @param original
-     */
-    public void outputToFile(Variable original) {
-        if (comp_unit == null) return;
-
-        String f_name;
-        num++;
-        f_name = getSourceName("COI");
-        String mutant_dir = getMuantID("COI");
-
-        try {
-            PrintWriter out = getPrintWriter(f_name);
-            COI_Writer writer = new COI_Writer(mutant_dir, out);
-            writer.setMutant(original);
-            writer.setMethodSignature(currentMethodSignature);
-            comp_unit.accept(writer);
-            out.flush();
-            out.close();
-        } catch (IOException e) {
-            System.err.println("fails to create " + f_name);
-        } catch (ParseTreeException e) {
-            System.err.println("errors during printing " + f_name);
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Output COI mutants to files
-     * @param original
-     */
-    public void outputToFile(FieldAccess original) {
-        if (comp_unit == null)
-            return;
-
-        String f_name;
-        num++;
-        f_name = getSourceName("COI");
-        String mutant_dir = getMuantID("COI");
-
-        try {
-            PrintWriter out = getPrintWriter(f_name);
-            COI_Writer writer = new COI_Writer(mutant_dir, out);
-            writer.setMutant(original);
-            writer.setMethodSignature(currentMethodSignature);
             comp_unit.accept(writer);
             out.flush();
             out.close();

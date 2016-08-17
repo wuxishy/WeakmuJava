@@ -30,7 +30,7 @@ import java.io.*;
  * @version 1.0
  */
 
-public class COD extends MethodLevelMutator {
+public class COD extends InstrumentationParser {
     public COD(FileEnvironment file_env, ClassDeclaration cdecl, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
     }
@@ -38,7 +38,20 @@ public class COD extends MethodLevelMutator {
     public void visit(UnaryExpression p) throws ParseTreeException {
         int op = p.getOperator();
         if (op == UnaryExpression.NOT) {
+            // original
+            typeStack.add(OJSystem.BOOLEAN);
+            exprStack.add(new UnaryExpression(genVar(counter+2), UnaryExpression.NOT)); // +0
+            // mutant
+            typeStack.add(OJSystem.BOOLEAN);
+            exprStack.add(genVar(counter+2)); // +1
+            // expression
+            typeStack.add(OJSystem.BOOLEAN);
+            exprStack.add(p.getExpression()); // +2
+            counter += 3;
+
             outputToFile(p);
+
+            pop(3);
         }
     }
 
@@ -57,9 +70,16 @@ public class COD extends MethodLevelMutator {
 
         try {
             PrintWriter out = getPrintWriter(f_name);
-            COD_Writer writer = new COD_Writer(mutant_dir, out);
-            writer.setMutant(original);
+            //PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+            InstrumentationCodeWriter writer = new InstrumentationCodeWriter(mutant_dir, out);
+
+            writer.setEnclose(encBlock);
+            writer.setBlock(mutBlock);
+            writer.setStatement(mutStatement);
+            writer.setExpression(mutExpression);
+            writer.setInstrument(genInstrument());
             writer.setMethodSignature(currentMethodSignature);
+
             comp_unit.accept(writer);
             out.flush();
             out.close();
