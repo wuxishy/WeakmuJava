@@ -183,6 +183,26 @@ public abstract class InstrumentationMutator extends MethodLevelMutator{
         }
     }
 
+    public void visit(VariableDeclaration p) throws ParseTreeException {
+        Statement newp = this.evaluateDown(p);
+        if (newp != p) {
+            p.replace(newp);
+            return;
+        }
+
+        mutStatement = p;
+
+        p.getInitializer().accept(this);
+
+        mutStatement = null;
+
+        newp = this.evaluateUp(p);
+        if (newp != p) {
+            p.replace(newp);
+            return;
+        }
+    }
+
     public void visit(WhileStatement p) throws ParseTreeException {
         Statement newp = this.evaluateDown(p);
         if (newp != p) {

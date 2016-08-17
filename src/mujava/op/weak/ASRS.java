@@ -175,9 +175,7 @@ public class ASRS extends InstrumentationMutator {
                 InstConfig.varPrefix + "MUTANT");
 
         // assign the value to the left hand side
-        AssignmentExpression assign = new AssignmentExpression(original.getLeft(), "=",
-                    new Variable(InstConfig.varPrefix + "ORIGINAL"));
-        inst.post.add(new ExpressionStatement(assign));
+        inst.varName = InstConfig.varPrefix + "ORIGINAL";
 
         outputToFile(original, inst);
     }

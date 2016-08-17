@@ -38,6 +38,7 @@ public class Instrument {
         init = new StatementList();
         assertion = new ArrayList<String>();
         post = new StatementList();
+        varName = null;
     }
 
     public void addAssertion(String a, String b) {

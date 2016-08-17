@@ -159,6 +159,55 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
         if (mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
+    public void visit(UnaryExpression p) throws ParseTreeException{
+        if(mutExpression == null) mutExpression = p;
+
+        int addlines = 0;
+        int addpost = 0;
+
+        // prefix increment/decrement
+        if(p.getOperator() == UnaryExpression.PRE_DECREMENT) {
+            typeStack.add(getType(p));
+            exprStack.add(new BinaryExpression(genVar(counter+2), "-", Literal.constantOne())); //+0
+            typeStack.add(getType(p));
+            exprStack.add(new BinaryExpression(genVar(counter+3), "-", Literal.constantOne())); //+1
+
+            addlines = 2;
+        }
+        else if(p.getOperator() == UnaryExpression.PRE_INCREMENT) {
+            typeStack.add(getType(p));
+            exprStack.add(new BinaryExpression(genVar(counter+2), "+", Literal.constantOne())); //+0
+            typeStack.add(getType(p));
+            exprStack.add(new BinaryExpression(genVar(counter+3), "+", Literal.constantOne())); //+1
+
+            addlines = 2;
+        }
+        // normal
+        else if(p.getOperator() >= 4) {
+            typeStack.add(getType(p));
+            exprStack.add(new UnaryExpression(genVar(counter+2), p.getOperator())); //+0
+            typeStack.add(getType(p));
+            exprStack.add(new UnaryExpression(genVar(counter+3), p.getOperator())); //+1
+
+            addlines = 2;
+        }
+
+        counter += addlines;
+
+        // short-cut in/decrement
+        if(p.getOperator() < 4) {
+            post.add(new ExpressionStatement((UnaryExpression) p.makeCopy()));
+            addpost = 1;
+        }
+
+        p.getExpression().accept(this);
+
+        pop(addlines);
+        for(int i = 0; i < addpost; ++i) post.remove(post.size()-1);
+
+        if(mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
+    }
+
     // combine typeStack and exprStack into a list of statements ready to be printed
     public Instrument genInstrument(){
         Instrument inst = new Instrument();

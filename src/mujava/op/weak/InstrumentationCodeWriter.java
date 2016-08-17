@@ -75,6 +75,27 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
 
     public void setInstrument(Instrument i) { inst = i; }
 
+    // unfortunately, as of right now, no support for nested assignment
+    public void visit(AssignmentExpression p) throws ParseTreeException {
+        if(!isSameObject(mutExpression, p)){
+            super.visit(p);
+            return;
+        }
+
+        out.println();
+        line_num++;
+        super.visit(inst.init);
+        for (String str : inst.assertion) writeString(str);
+        super.visit(inst.post);
+
+        if(inst.varName != null){
+            writeTab();
+            p.getLeft().accept(this);
+            out.println(" = " + inst.varName + ";");
+            line_num++;
+        }
+    }
+
     // set a preKill flag in the first line of code
     public void visit(CompilationUnit p)
             throws ParseTreeException {
@@ -158,14 +179,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
 
     public void visit(ExpressionStatement p) throws ParseTreeException {
         if(isSameObject(mutStatement, p)) {
-            out.println();
-            line_num++;
-            super.visit(inst.init);
-            for (String str : inst.assertion) writeString(str);
-            super.visit(inst.post);
-            if(mutBlock == null) writeString(Instrument.exit);
-            out.println();
-            line_num++;
+            p.getExpression().accept(this);
         }
         else super.visit(p);
     }
@@ -284,7 +298,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         super.visit(inst.init);
         for (String str : inst.assertion) writeString(str);
         super.visit(inst.post);
-        if(mutBlock == null) writeString(Instrument.exit);
+        writeExit(p);
 
         writeTab();
         out.print("if (");;
@@ -319,6 +333,50 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
                 }
         }
         out.print(name);
+    }
+
+    public void visit(VariableDeclaration p) throws ParseTreeException{
+        // do nothing special if the mutant is not in the declaration
+        if (!isSameObject(mutStatement, p)) {
+            super.visit(p);
+            return;
+        }
+
+        out.println();
+        line_num++;
+        super.visit(inst.init);
+        for (String str : inst.assertion) writeString(str);
+        super.visit(inst.post);
+
+        writeTab();
+
+        ModifierList modifs = p.getModifiers();
+        modifs.accept(this);
+        if (!modifs.isEmptyAsRegular()) out.print(" ");
+
+        TypeName typespec = p.getTypeSpecifier();
+        typespec.accept(this);
+
+        out.print(" ");
+
+        VariableDeclarator decl = p.getVariableDeclarator();
+
+        String declname = decl.getVariable();
+        out.print(declname);
+
+        for (int i = 0; i < decl.getDimension(); ++i) {
+            out.print("[]");
+        }
+
+        VariableInitializer varinit = decl.getInitializer();
+        if (varinit != null) {
+            out.println(" = " + inst.varName + ";");
+            line_num++;
+        }
+
+        writeExit(p);
+        out.println();
+        line_num++;
     }
 
     public void visit(WhileStatement p) throws ParseTreeException {
@@ -387,7 +445,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
     }
 
     private void writeExit(Statement p){
-        if(isSameObject(p, encBlock)) {
+        if(encBlock == null || isSameObject(p, encBlock)) {
             writeString(Instrument.exit);
             out.println();
             line_num++;
