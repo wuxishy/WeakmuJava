@@ -130,11 +130,13 @@ public class ROR extends Arithmetic_OP {
         //Change the expression to true
         typeStack.add(OJSystem.BOOLEAN);
         exprStack.add(Literal.constantTrue());
+        counter += 2;
         outputToFile(exp, mutant);
         pop(1);
         //Change the expression to false
         typeStack.add(OJSystem.BOOLEAN);
         exprStack.add(Literal.constantFalse());
+        counter += 1;
         outputToFile(exp, mutant);
         pop(2);
 
@@ -294,9 +296,16 @@ public class ROR extends Arithmetic_OP {
 
         try {
             PrintWriter out = getPrintWriter(f_name);
-            ROR_Writer writer = new ROR_Writer(mutant_dir, out);
-            writer.setMutant(original, mutant);
+            //PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+            InstrumentationCodeWriter writer = new InstrumentationCodeWriter(mutant_dir, out);
+
+            writer.setEnclose(encBlock);
+            writer.setBlock(mutBlock);
+            writer.setStatement(mutStatement);
+            writer.setExpression(mutExpression);
+            writer.setInstrument(genInstrument());
             writer.setMethodSignature(currentMethodSignature);
+
             comp_unit.accept(writer);
             out.flush();
             out.close();

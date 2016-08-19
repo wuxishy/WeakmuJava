@@ -87,18 +87,12 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         super.visit(inst.init);
         for (String str : inst.assertion) writeString(str);
         super.visit(inst.post);
-
-        if(inst.varName != null){
-            writeTab();
-            p.getLeft().accept(this);
-            out.println(" = " + inst.varName + ";");
-            line_num++;
-        }
     }
 
     // set a preKill flag in the first line of code
     public void visit(CompilationUnit p)
             throws ParseTreeException {
+        //System.out.println("MUTANT!");
         out.println("// PREKILL: " + preKill);
         line_num++;
         out.println("// This is an instrumented mutant program.");

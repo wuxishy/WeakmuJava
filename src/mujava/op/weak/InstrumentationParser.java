@@ -53,6 +53,19 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
 
     protected StatementList post;
 
+    public void visit(AssignmentExpression p) throws ParseTreeException {
+        if(mutExpression == null) mutExpression = p;
+
+        post.add(new ExpressionStatement(
+                new AssignmentExpression(p.getLeft(), p.getOperator(), genVar(counter))));
+
+        p.getRight().accept(this);
+
+        post.remove(post.size()-1);
+
+        if (mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
+    }
+
     public void visit(BinaryExpression p) throws ParseTreeException {
         if (mutExpression == null) mutExpression = p;
 

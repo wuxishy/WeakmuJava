@@ -117,7 +117,10 @@ public abstract class InstrumentationMutator extends MethodLevelMutator{
             if (init != null && (!init.isEmpty()))
                 init.accept(this);
             else if (tspec != null && vdecls != null && vdecls.length != 0)
-                for(VariableDeclarator decl : vdecls) decl.accept(this);
+                for(VariableDeclarator decl : vdecls) {
+                    System.out.println(decl.toString());
+                    decl.accept(this);
+                }
 
             p.getCondition().accept(this);
 
