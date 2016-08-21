@@ -36,6 +36,8 @@ public class COD extends InstrumentationParser {
     }
 
     public void visit(UnaryExpression p) throws ParseTreeException {
+        if (mutExpression == null) mutExpression = p;
+
         int op = p.getOperator();
         if (op == UnaryExpression.NOT) {
             // original
@@ -53,6 +55,8 @@ public class COD extends InstrumentationParser {
 
             pop(3);
         }
+
+        if(mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
     /**

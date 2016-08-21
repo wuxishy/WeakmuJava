@@ -29,45 +29,67 @@ import java.io.*;
  * @version 1.0
  */
 
-public class SOR extends MethodLevelMutator {
+public class SOR extends InstrumentationParser {
     public SOR(FileEnvironment file_env, ClassDeclaration cdecl, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
     }
 
     public void visit(BinaryExpression p) throws ParseTreeException {
-        Expression left = p.getLeft();
-        left.accept(this);
+        // first recursively search down the parse tree
+        super.visit(p);
 
-        int op_type = p.getOperator();
-        if ((op_type == BinaryExpression.SHIFT_L) || (op_type == BinaryExpression.SHIFT_R)
-                || (op_type == BinaryExpression.SHIFT_RR)) {
-            sorMutantGen(p, op_type);
+        // mutate the current binary operator
+        if (mutExpression == null) mutExpression = p;
+
+        if ((getType(p.getLeft()) == OJSystem.BOOLEAN) &&
+                (getType(p.getRight()) == OJSystem.BOOLEAN)) {
+            int op_type = p.getOperator();
+            if ((op_type == BinaryExpression.SHIFT_L) || (op_type == BinaryExpression.SHIFT_R)
+                    || (op_type == BinaryExpression.SHIFT_RR)) {
+                sorMutantGen(p, op_type);
+            }
         }
 
-        Expression right = p.getRight();
-        right.accept(this);
+        if (mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
-    private void sorMutantGen(BinaryExpression exp, int op) {
-        BinaryExpression mutant;
+    private void sorMutantGen(BinaryExpression exp, int op) throws ParseTreeException {
+        BinaryExpression original = new BinaryExpression(genVar(counter+3), op, genVar(counter+2));
+        BinaryExpression mutant = (BinaryExpression) (original.makeRecursiveCopy());
+
+        // original
+        typeStack.add(getType(exp));
+        exprStack.add(original); // +0
+        // mutant
+        typeStack.add(getType(exp));
+        exprStack.add(mutant); // +1
+        // RHS
+        typeStack.add(getType(exp.getRight()));
+        exprStack.add(exp.getRight()); // +2
+        // LHS
+        typeStack.add(getType(exp.getLeft()));
+        exprStack.add(exp.getLeft()); // +3
+        counter += 4;
 
         if (op != BinaryExpression.SHIFT_L) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.SHIFT_L);
+
             outputToFile(exp, mutant);
         }
 
         if (op != BinaryExpression.SHIFT_R) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.SHIFT_R);
+
             outputToFile(exp, mutant);
         }
 
         if (op != BinaryExpression.SHIFT_RR) {
-            mutant = (BinaryExpression) (exp.makeRecursiveCopy());
             mutant.setOperator(BinaryExpression.SHIFT_RR);
+
             outputToFile(exp, mutant);
         }
+
+        pop(4);
     }
 
     /**
@@ -86,9 +108,16 @@ public class SOR extends MethodLevelMutator {
 
         try {
             PrintWriter out = getPrintWriter(f_name);
-            SOR_Writer writer = new SOR_Writer(mutant_dir, out);
-            writer.setMutant(original, mutant);
+            //PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+            InstrumentationCodeWriter writer = new InstrumentationCodeWriter(mutant_dir, out);
+
+            writer.setEnclose(encBlock);
+            writer.setBlock(mutBlock);
+            writer.setStatement(mutStatement);
+            writer.setExpression(mutExpression);
+            writer.setInstrument(genInstrument());
             writer.setMethodSignature(currentMethodSignature);
+
             comp_unit.accept(writer);
             out.flush();
             out.close();

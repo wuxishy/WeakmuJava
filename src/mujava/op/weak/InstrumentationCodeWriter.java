@@ -204,15 +204,17 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
             itName = new ArrayList<String>();
 
             for (int i = 0; i < vdecls.length; ++i) {
-                writeTab();
-                tspec.accept(this);
-                out.print(" ");
-                itName.add(vdecls[i].getVariable());
                 if(isSameObject(vdecls[i].getInitializer(), mutExpression)) {
                     super.visit(inst.init);
                     for (String str : inst.assertion) writeString(str);
                     super.visit(inst.post);
                 }
+
+                writeTab();
+                tspec.accept(this);
+                out.print(" ");
+                itName.add(vdecls[i].getVariable());
+
                 writeNewName(vdecls[i], i);
                 out.println(";");
                 line_num++;

@@ -35,16 +35,18 @@ public class LOD extends InstrumentationParser {
     }
 
     public void visit(UnaryExpression p) throws ParseTreeException {
+        if (mutExpression == null) mutExpression = p;
+
         int op = p.getOperator();
         if (op == UnaryExpression.BIT_NOT) {
             // original
-            typeStack.add(OJSystem.BOOLEAN);
+            typeStack.add(getType(p));
             exprStack.add(new UnaryExpression(genVar(counter+2), UnaryExpression.BIT_NOT)); // +0
             // mutant
-            typeStack.add(OJSystem.BOOLEAN);
+            typeStack.add(getType(p));
             exprStack.add(genVar(counter+2)); // +1
             // expression
-            typeStack.add(OJSystem.BOOLEAN);
+            typeStack.add(getType(p));
             exprStack.add(p.getExpression()); // +2
             counter += 3;
 
@@ -52,6 +54,8 @@ public class LOD extends InstrumentationParser {
 
             pop(3);
         }
+
+        if(mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
     /**

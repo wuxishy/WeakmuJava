@@ -35,39 +35,47 @@ public class LOI extends Arithmetic_OP {
     }
 
     public void visit(Variable p) throws ParseTreeException {
+        if (mutExpression == null) mutExpression = p;
+
         if (isArithmeticType(p)) {
             loiMutantGen(p);
         }
+
+        if(mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
     public void visit(FieldAccess p) throws ParseTreeException {
+        if (mutExpression == null) mutExpression = p;
+
         if (isArithmeticType(p)) {
             loiMutantGen(p);
         }
+
+        if(mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
-    public void visit(AssignmentExpression p) throws ParseTreeException {
-        Expression lexpr = p.getLeft();
+//    public void visit(AssignmentExpression p) throws ParseTreeException {
+//        Expression lexpr = p.getLeft();
+//
+//        if ((lexpr instanceof Variable) || (lexpr instanceof FieldAccess)) {
+//            // do nothing
+//        } else {
+//            lexpr.accept(this);
+//        }
+//
+//        Expression rexp = p.getRight();
+//        rexp.accept(this);
+//    }
 
-        if ((lexpr instanceof Variable) || (lexpr instanceof FieldAccess)) {
-            // do nothing
-        } else {
-            lexpr.accept(this);
-        }
-
-        Expression rexp = p.getRight();
-        rexp.accept(this);
-    }
-
-    private void loiMutantGen(Expression p){
+    private void loiMutantGen(Expression p) throws ParseTreeException {
         // original
-        typeStack.add(OJSystem.BOOLEAN);
+        typeStack.add(getType(p));
         exprStack.add(genVar(counter+2)); // +0
         // mutant
-        typeStack.add(OJSystem.BOOLEAN);
-        exprStack.add(new UnaryExpression(genVar(counter+2), UnaryExpression.NOT)); // +1
+        typeStack.add(getType(p));
+        exprStack.add(new UnaryExpression(genVar(counter+2), UnaryExpression.BIT_NOT)); // +1
         // expression
-        typeStack.add(OJSystem.BOOLEAN);
+        typeStack.add(getType(p));
         exprStack.add(p); // +2
         counter += 3;
 
@@ -85,8 +93,8 @@ public class LOI extends Arithmetic_OP {
 
         String f_name;
         num++;
-        f_name = getSourceName("COI");
-        String mutant_dir = getMuantID("COI");
+        f_name = getSourceName("LOI");
+        String mutant_dir = getMuantID("LOI");
 
         try {
             PrintWriter out = getPrintWriter(f_name);

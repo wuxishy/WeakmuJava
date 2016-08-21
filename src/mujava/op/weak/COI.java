@@ -41,15 +41,23 @@ public class COI extends InstrumentationParser {
     }
 
     public void visit(Variable p) throws ParseTreeException {
+        if (mutExpression == null) mutExpression = p;
+
         if (getType(p) == OJSystem.BOOLEAN) {
             coiMutantGen(p);
         }
+
+        if(mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
     public void visit(FieldAccess p) throws ParseTreeException {
+        if (mutExpression == null) mutExpression = p;
+
         if (getType(p) == OJSystem.BOOLEAN) {
             coiMutantGen(p);
         }
+
+        if(mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
     public void visit(BinaryExpression p) throws ParseTreeException {
