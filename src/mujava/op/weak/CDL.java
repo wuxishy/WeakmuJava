@@ -20,8 +20,6 @@ import openjava.ptree.*;
 
 import java.io.*;
 
-import org.hamcrest.core.IsInstanceOf;
-
 /**
  * <p>Generate CDL (Constants DeLetion) mutants
  * </p>
@@ -29,7 +27,7 @@ import org.hamcrest.core.IsInstanceOf;
  * @version 1.0
  */
 
-public class CDL extends Arithmetic_OP {
+public class CDL extends Arithmetic_OP_Weak {
     public CDL(FileEnvironment file_env, ClassDeclaration cdecl, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
     }

@@ -30,7 +30,7 @@ import java.io.*;
  * @version 1.0
  */
 
-public class AOIS extends Arithmetic_OP {
+public class AOIS extends Arithmetic_OP_Weak {
     boolean isPrePostEQ = true;
 
     public AOIS(FileEnvironment file_env, ClassDeclaration cdecl, CompilationUnit comp_unit) {

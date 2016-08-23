@@ -29,7 +29,7 @@ import java.io.*;
  * @version 1.0
  */
 
-public class AODU extends Arithmetic_OP {
+public class AODU extends Arithmetic_OP_Weak {
     boolean aor_flag = false;
 
     public AODU(FileEnvironment file_env, ClassDeclaration cdecl, CompilationUnit comp_unit) {

@@ -27,7 +27,7 @@ import java.io.*;
  * @version 1.0
  */
 
-public class VDL extends Arithmetic_OP {
+public class VDL extends Arithmetic_OP_Weak {
     public VDL(FileEnvironment file_env, ClassDeclaration cdecl, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
     }

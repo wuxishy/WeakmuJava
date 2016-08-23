@@ -24,8 +24,8 @@ import openjava.ptree.*;
  * @version 1.0
  */
 
-public class Arithmetic_OP extends InstrumentationParser {
-    public Arithmetic_OP(FileEnvironment file_env, CompilationUnit comp_unit) {
+public class Arithmetic_OP_Weak extends InstrumentationParser {
+    public Arithmetic_OP_Weak(FileEnvironment file_env, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
     }
 

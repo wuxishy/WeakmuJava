@@ -29,7 +29,7 @@ import java.io.*;
  * @version 1.0
  */
 
-public class LOI extends Arithmetic_OP {
+public class LOI extends Arithmetic_OP_Weak {
     public LOI(FileEnvironment file_env, ClassDeclaration cdecl, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
     }

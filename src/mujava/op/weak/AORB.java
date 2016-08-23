@@ -29,7 +29,7 @@ import java.io.*;
  * @version 0.1a
  */
 
-public class AORB extends Arithmetic_OP {
+public class AORB extends Arithmetic_OP_Weak {
     public AORB(FileEnvironment file_env, ClassDeclaration cdecl, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
     }
