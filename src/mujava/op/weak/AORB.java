@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015  the original author or authors.
+ * Copyright (C) 2016 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import java.io.*;
  *    replace an arithmetic operator by each of the other operators  
  *    (*, /, %, +, -)
  * </p>
- * @author Yu-Seung Ma
- * @version 1.0
+ * @author Haoyuan SUn
+ * @version 0.1a
  */
 
 public class AORB extends Arithmetic_OP {
@@ -39,12 +39,12 @@ public class AORB extends Arithmetic_OP {
      * MOD, PLUS, MINUS (excluding itself)
      */
     public void visit(BinaryExpression p) throws ParseTreeException {
-        Expression left = p.getLeft();
-        left.accept(this);
+        // first recursively visit the parse tree
+        super.visit(p);
 
-        Expression right = p.getRight();
-        right.accept(this);
-
+        if (mutExpression == null) mutExpression = p;
+        
+        // mutate the current binary expression
         if (isArithmeticType(p)) {
             int op_type = p.getOperator();
             switch (op_type) {
@@ -71,43 +71,65 @@ public class AORB extends Arithmetic_OP {
                     break;
             }
         }
+
+        if (mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
-    private void aorMutantGen(BinaryExpression exp, int op) {
-        BinaryExpression mutant;
+    private void aorMutantGen(BinaryExpression exp, int op) throws ParseTreeException {
+        BinaryExpression original = new BinaryExpression(genVar(counter+3), op, genVar(counter+2));
+        BinaryExpression mutant = (BinaryExpression) (original.makeRecursiveCopy());
+
+        // original
+        typeStack.add(getType(exp));
+        exprStack.add(original); // +0
+        // mutant
+        typeStack.add(getType(exp));
+        exprStack.add(mutant); // +1
+        // RHS
+        typeStack.add(getType(exp.getRight()));
+        exprStack.add(exp.getRight()); // +2
+        // LHS
+        typeStack.add(getType(exp.getLeft()));
+        exprStack.add(exp.getLeft()); // +3
+        counter += 4;
+
         if (op != BinaryExpression.TIMES) {
-            mutant = (BinaryExpression) exp.makeRecursiveCopy();
             mutant.setOperator(BinaryExpression.TIMES);
-            aor_outputToFile(exp, mutant);
+
+            outputToFile();
         }
+
         if (op != BinaryExpression.DIVIDE) {
-            mutant = (BinaryExpression) exp.makeRecursiveCopy();
             mutant.setOperator(BinaryExpression.DIVIDE);
-            aor_outputToFile(exp, mutant);
+
+            outputToFile();
         }
+
         if (op != BinaryExpression.MOD) {
-            mutant = (BinaryExpression) exp.makeRecursiveCopy();
             mutant.setOperator(BinaryExpression.MOD);
-            aor_outputToFile(exp, mutant);
+
+            outputToFile();
         }
+
         if (op != BinaryExpression.PLUS) {
-            mutant = (BinaryExpression) exp.makeRecursiveCopy();
             mutant.setOperator(BinaryExpression.PLUS);
-            aor_outputToFile(exp, mutant);
+
+            outputToFile();
         }
+        
         if (op != BinaryExpression.MINUS) {
-            mutant = (BinaryExpression) exp.makeRecursiveCopy();
             mutant.setOperator(BinaryExpression.MINUS);
-            aor_outputToFile(exp, mutant);
+
+            outputToFile();
         }
+        
+        pop(4);
     }
 
     /**
      * Output AORB mutants to file
-     * @param original
-     * @param mutant
      */
-    public void aor_outputToFile(BinaryExpression original, BinaryExpression mutant) {
+    public void outputToFile() {
         if (comp_unit == null)
             return;
 
@@ -118,9 +140,16 @@ public class AORB extends Arithmetic_OP {
 
         try {
             PrintWriter out = getPrintWriter(f_name);
-            AORB_Writer writer = new AORB_Writer(mutant_dir, out);
-            writer.setMutant(original, mutant);
+            //PrintWriter out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+            InstrumentationCodeWriter writer = new InstrumentationCodeWriter(mutant_dir, out);
+
+            writer.setEnclose(encBlock);
+            writer.setBlock(mutBlock);
+            writer.setStatement(mutStatement);
+            writer.setExpression(mutExpression);
+            writer.setInstrument(genInstrument());
             writer.setMethodSignature(currentMethodSignature);
+
             comp_unit.accept(writer);
             out.flush();
             out.close();
