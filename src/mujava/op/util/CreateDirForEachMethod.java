@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package mujava.op.weak;
+package mujava.op.util;
 
 import openjava.mop.*;
 import openjava.ptree.*;

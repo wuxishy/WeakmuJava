@@ -46,12 +46,6 @@ public class Instrument {
         assertion.add(if_t + a + " != " + b + ") throw new WeakKillException();");
     }
 
-    public void addFloatAssertion(String a, String b) {
-        String if_t = (assertion.isEmpty()) ? "if (" : "else if (";
-        assertion.add(if_t + "Math.abs(" + a + " - " + b + ") > " + InstConfig.eps +
-            ") throw new WeakKillException();");
-    }
-
     // Hack: because java thinks "unreachable code" is a compile error.
     // Tested up to Java 8, not guaranteed to work in future versions of Java.
     public static String exit = "if (true) throw new WeakLiveException();";

@@ -16,12 +16,9 @@
 
 package mujava.op.weak;
 
+import mujava.op.util.MethodLevelMutator;
 import openjava.mop.*;
 import openjava.ptree.*;
-
-import java.io.*;
-
-import mujava.MutationSystem;
 
 /**
  * <p>Keeps track of where we are</p>
@@ -29,7 +26,7 @@ import mujava.MutationSystem;
  * @version 0.1a
  */
 
-public abstract class InstrumentationMutator extends MethodLevelMutator{
+public abstract class InstrumentationMutator extends MethodLevelMutator {
     public InstrumentationMutator(FileEnvironment file_env, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package mujava.op.weak;
+package mujava.op.util;
 
 import openjava.mop.*;
 import openjava.ptree.*;
@@ -30,7 +30,7 @@ import mujava.MutationSystem;
  * @version 1.0
  */
 public class MethodLevelMutator extends mujava.op.util.Mutator {
-    String currentMethodSignature = null;
+    protected String currentMethodSignature = null;
 
     public MethodLevelMutator(FileEnvironment file_env, CompilationUnit comp_unit) {
         super(file_env, comp_unit);
