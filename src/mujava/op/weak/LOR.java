@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015  the original author or authors.
+ * Copyright (C) 2016 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import java.io.*;
  *    (bitwise and-& ,bitwise or-|, exclusive or-^) by each of 
  *    the other operators
  * </p>
- * @author Yu-Seung Ma
- * @version 1.0
+ * @author Haoyuan Sun
+ * @version 0.1a
  */
 
 public class LOR extends InstrumentationParser {
@@ -73,22 +73,23 @@ public class LOR extends InstrumentationParser {
         exprStack.add(exp.getLeft()); // +3
         counter += 4;
 
+        // set the binary operator for mutant
         if (op != BinaryExpression.BITAND) {
             mutant.setOperator(BinaryExpression.BITAND);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         if (op != BinaryExpression.BITOR) {
             mutant.setOperator(BinaryExpression.BITOR);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         if (op != BinaryExpression.XOR) {
             mutant.setOperator(BinaryExpression.XOR);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
     }
 
@@ -96,10 +97,8 @@ public class LOR extends InstrumentationParser {
 
         /**
          * Output LOR mutants to files
-         * @param original
-         * @param mutant
          */
-    public void outputToFile(BinaryExpression original, BinaryExpression mutant) {
+    public void outputToFile() {
         if (comp_unit == null)
             return;
 

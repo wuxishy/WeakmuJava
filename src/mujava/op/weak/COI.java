@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015  the original author or authors.
+ * Copyright (C) 2016 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,10 @@ import java.io.*;
 
 /**
  * <p>Generate COI (Conditional Operator Insertion) mutants --
- *    insert logical operators (and-&&, or-||, 
- *    and with no conditional evaluation-&, 
- *    or with no conditional evaluation-|, not equivalent-^)
+ *    insert logical not operator (!)
  * </p>
- * @author Yu-Seung Ma
- * @version 1.0
+ * @author Haoyuan Sun
+ * @version 0.1a
  */
 
 public class COI extends InstrumentationParser {
@@ -73,10 +71,10 @@ public class COI extends InstrumentationParser {
     }
 
     private void coiMutantGen(Expression p){
-        // original
+        // original -- without logical not
         typeStack.add(OJSystem.BOOLEAN);
         exprStack.add(genVar(counter+2)); // +0
-        // mutant
+        // mutant -- with logical not
         typeStack.add(OJSystem.BOOLEAN);
         exprStack.add(new UnaryExpression(genVar(counter+2), UnaryExpression.NOT)); // +1
         // expression

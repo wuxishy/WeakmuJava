@@ -75,7 +75,6 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
 
     public void setInstrument(Instrument i) { inst = i; }
 
-    // unfortunately, as of right now, no support for nested assignment
     public void visit(AssignmentExpression p) throws ParseTreeException {
         if(!isSameObject(mutExpression, p)){
             super.visit(p);
@@ -86,6 +85,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         line_num++;
         super.visit(inst.init);
         for (String str : inst.assertion) writeString(str);
+        // assignment is made here
         super.visit(inst.post);
     }
 
@@ -147,15 +147,18 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         line_num++;
         pushNest();
 
+        // body
         StatementList stmts = p.getStatements();
         if (!stmts.isEmpty()) stmts.accept(this);
         out.println();
         line_num++;
 
+        // instrumentation
         super.visit(inst.init);
         for (String str : inst.assertion) writeString(str);
         super.visit(inst.post);
 
+        // condition
         writeTab();
         out.print("if (!");;
         out.print(inst.varName);
@@ -173,6 +176,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
 
     public void visit(ExpressionStatement p) throws ParseTreeException {
         if(isSameObject(mutStatement, p)) {
+            // instrumentation got everything
             p.getExpression().accept(this);
         }
         else super.visit(p);
@@ -193,6 +197,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         out.println();
         line_num++;
 
+        // initializer
         if (init != null && (!init.isEmpty())) {
             for (int i = 0; i < init.size(); ++i) {
                 writeTab();
@@ -201,10 +206,13 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
                 line_num++;
             }
         } else if (tspec != null && vdecls != null && vdecls.length != 0) {
+            // change the name of variables declared in the initializer
+            // to avoid name collision
             itName = new ArrayList<String>();
 
             for (int i = 0; i < vdecls.length; ++i) {
                 if(isSameObject(vdecls[i].getInitializer(), mutExpression)) {
+                    // write instrumentation first
                     super.visit(inst.init);
                     for (String str : inst.assertion) writeString(str);
                     super.visit(inst.post);
@@ -226,6 +234,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         line_num++;
         pushNest();
 
+        // condition
         Expression expr = p.getCondition();
         if(isSameObject(expr, mutExpression)){
             super.visit(inst.init);
@@ -242,20 +251,20 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
             writeTab();
             out.print("if (!(");
             expr.accept(this);
-            out.print(")) break");
+            out.println(")) break;");
+            line_num++;
         }
 
-
-        out.println(";");
-        line_num++;
         out.println();
         line_num++;
 
+        // main body
         StatementList stmts = p.getStatements();
         if (!stmts.isEmpty()) stmts.accept(this);
         out.println();
         line_num++;
 
+        // the increment part of the control predicate
         ExpressionList incr = p.getIncrement();
         if (incr != null && (!incr.isEmpty())) {
             for (int i = 0; i < incr.size(); ++i) {
@@ -364,6 +373,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
             out.print("[]");
         }
 
+        // assign the final value of the instrument
         VariableInitializer varinit = decl.getInitializer();
         if (varinit != null) {
             out.println(" = " + inst.varName + ";");
@@ -390,10 +400,12 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         line_num++;
         pushNest();
 
+        // instrumentation
         super.visit(inst.init);
         for (String str : inst.assertion) writeString(str);
         super.visit(inst.post);
 
+        // condition
         writeTab();
         out.print("if (!");;
         out.print(inst.varName);
@@ -403,6 +415,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
 
         out.println();
         line_num++;
+        // main body
         StatementList stmts = p.getStatements();
         if (!stmts.isEmpty()) stmts.accept(this);
 
@@ -440,6 +453,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         }
     }
 
+    // write the exit string if this is the end of block
     private void writeExit(Statement p){
         if(encBlock == null || isSameObject(p, encBlock)) {
             writeString(Instrument.exit);

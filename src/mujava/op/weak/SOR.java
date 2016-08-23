@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015  the original author or authors.
+ * Copyright (C) 2016 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import java.io.*;
  *    replace each occurrence of one of the shift operators <<, >>, and >>>
  *    by each of the other operators
  * </p>
- * @author Yu-Seung Ma
- * @version 1.0
+ * @author Haoyuan Sun
+ * @version 0.1a
  */
 
 public class SOR extends InstrumentationParser {
@@ -71,22 +71,23 @@ public class SOR extends InstrumentationParser {
         exprStack.add(exp.getLeft()); // +3
         counter += 4;
 
+        // set the binary operator for mutants
         if (op != BinaryExpression.SHIFT_L) {
             mutant.setOperator(BinaryExpression.SHIFT_L);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         if (op != BinaryExpression.SHIFT_R) {
             mutant.setOperator(BinaryExpression.SHIFT_R);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         if (op != BinaryExpression.SHIFT_RR) {
             mutant.setOperator(BinaryExpression.SHIFT_RR);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         pop(4);
@@ -94,10 +95,8 @@ public class SOR extends InstrumentationParser {
 
     /**
      * Output SOR mutants to files
-     * @param original
-     * @param mutant
      */
-    public void outputToFile(BinaryExpression original, BinaryExpression mutant) {
+    public void outputToFile() {
         if (comp_unit == null)
             return;
 

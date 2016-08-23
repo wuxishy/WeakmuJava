@@ -75,30 +75,19 @@ public class ASRS extends InstrumentationMutator {
      * by each of the other operators
      */
     void genArithmeticMutants(AssignmentExpression p, int op, OJClass type) {
-        AssignmentExpression mutant;
         if (!(op == AssignmentExpression.ADD)) {
-            mutant = (AssignmentExpression) (p.makeRecursiveCopy());
-            mutant.setOperator(AssignmentExpression.ADD);
             genInstrument(p, AssignmentExpression.ADD, type);
         }
         if (!(op == AssignmentExpression.DIVIDE)) {
-            mutant = (AssignmentExpression) (p.makeRecursiveCopy());
-            mutant.setOperator(AssignmentExpression.DIVIDE);
             genInstrument(p, AssignmentExpression.DIVIDE, type);
         }
         if (!(op == AssignmentExpression.MULT)) {
-            mutant = (AssignmentExpression) (p.makeRecursiveCopy());
-            mutant.setOperator(AssignmentExpression.MULT);
             genInstrument(p, AssignmentExpression.MULT, type);
         }
         if (!(op == AssignmentExpression.SUB)) {
-            mutant = (AssignmentExpression) (p.makeRecursiveCopy());
-            mutant.setOperator(AssignmentExpression.SUB);
             genInstrument(p, AssignmentExpression.SUB, type);
         }
         if (!(op == AssignmentExpression.MOD)) {
-            mutant = (AssignmentExpression) (p.makeRecursiveCopy());
-            mutant.setOperator(AssignmentExpression.MOD);
             genInstrument(p, AssignmentExpression.MOD, type);
         }
     }
@@ -108,20 +97,13 @@ public class ASRS extends InstrumentationMutator {
      * by each of the other operators
      */
     void genLogicalMutants(AssignmentExpression p, int op, OJClass type) {
-        AssignmentExpression mutant;
         if (!(op == AssignmentExpression.AND)) {
-            mutant = (AssignmentExpression) (p.makeRecursiveCopy());
-            mutant.setOperator(AssignmentExpression.AND);
             genInstrument(p, AssignmentExpression.AND, type);
         }
         if (!(op == AssignmentExpression.OR)) {
-            mutant = (AssignmentExpression) (p.makeRecursiveCopy());
-            mutant.setOperator(AssignmentExpression.OR);
             genInstrument(p, AssignmentExpression.OR, type);
         }
         if (!(op == AssignmentExpression.XOR)) {
-            mutant = (AssignmentExpression) (p.makeRecursiveCopy());
-            mutant.setOperator(AssignmentExpression.XOR);
             genInstrument(p, AssignmentExpression.XOR, type);
         }
     }
@@ -131,20 +113,13 @@ public class ASRS extends InstrumentationMutator {
      * by each of the other operators
      */
     void genShiftMutants(AssignmentExpression p, int op, OJClass type) {
-        AssignmentExpression mutant;
         if (!(op == AssignmentExpression.SHIFT_L)) {
-            mutant = (AssignmentExpression) (p.makeRecursiveCopy());
-            mutant.setOperator(AssignmentExpression.SHIFT_L);
             genInstrument(p, AssignmentExpression.SHIFT_L, type);
         }
         if (!(op == AssignmentExpression.SHIFT_R)) {
-            mutant = (AssignmentExpression) (p.makeRecursiveCopy());
-            mutant.setOperator(AssignmentExpression.SHIFT_R);
             genInstrument(p, AssignmentExpression.SHIFT_R, type);
         }
         if (!(op == AssignmentExpression.SHIFT_RR)) {
-            mutant = (AssignmentExpression) (p.makeRecursiveCopy());
-            mutant.setOperator(AssignmentExpression.SHIFT_RR);
             genInstrument(p, AssignmentExpression.SHIFT_RR, type);
         }
     }
@@ -177,7 +152,7 @@ public class ASRS extends InstrumentationMutator {
         // assign the value to the left hand side
         inst.varName = InstConfig.varPrefix + "ORIGINAL";
 
-        outputToFile(original, inst);
+        outputToFile(inst);
     }
 
     // adapted from openjava's source code
@@ -186,10 +161,9 @@ public class ASRS extends InstrumentationMutator {
 
     /**
      * Output ASRS mutants to file
-     * @param original
      * @param inst
      */
-    public void outputToFile(AssignmentExpression original, Instrument inst) {
+    public void outputToFile(Instrument inst) {
         if (comp_unit == null)
             return;
 

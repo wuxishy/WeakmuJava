@@ -21,7 +21,7 @@ import openjava.mop.*;
 import openjava.ptree.*;
 
 /**
- * <p>Keeps track of where we are</p>
+ * <p>Keeps track of where the mutant is</p>
  * @author Haoyuan Sun
  * @version 0.1a
  */

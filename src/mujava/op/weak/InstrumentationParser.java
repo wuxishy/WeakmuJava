@@ -26,7 +26,7 @@ import mujava.MutationSystem;
 import openjava.ptree.Expression;
 
 /**
- * <p>Recursively evaluate an expression</p>
+ * <p>Recursively evaluate an expression and generate instrumentation to a stack</p>
  * <p>
  * Refer to <a href=https://www.sharelatex.com/project/577c5c8abfe51f234ad0c329>the planning document</a>
  * for exact details on the recursive parser
@@ -48,7 +48,9 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
     protected int counter = 0;
 
     // keep the operands of the expression in a stack
+    // the type of each statement
     protected Stack<OJClass> typeStack;
+    // the main body of each expression
     protected Stack<Expression> exprStack;
 
     protected StatementList post;
@@ -56,9 +58,12 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
     public void visit(AssignmentExpression p) throws ParseTreeException {
         if(mutExpression == null) mutExpression = p;
 
+        // assign the previous value to LHS
         post.add(new ExpressionStatement(
                 new AssignmentExpression(p.getLeft(), p.getOperator(), genVar(counter))));
 
+        // look for RHS
+        // TODO: LHS should be mutated if it is ArrayAccess
         p.getRight().accept(this);
 
         post.remove(post.size()-1);
@@ -195,7 +200,8 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
 
             addlines = 2;
         }
-        // normal
+        // postfix increment/decrement has no immediate effects
+        // other: plus, minus, logical not, bitwise not
         else if(p.getOperator() >= 4) {
             typeStack.add(getType(p));
             exprStack.add(new UnaryExpression(genVar(counter+2), p.getOperator())); //+0
@@ -209,7 +215,7 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
 
         // short-cut in/decrement
         if(p.getOperator() < 4) {
-            post.add(new ExpressionStatement((UnaryExpression) p.makeCopy()));
+            post.add(new ExpressionStatement((UnaryExpression) p.makeRecursiveCopy()));
             addpost = 1;
         }
 

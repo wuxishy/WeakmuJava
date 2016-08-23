@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015  the original author or authors.
+ * Copyright (C) 2016 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,10 @@ import java.io.*;
 
 /**
  * <p>Generate LOI (Logical Operator Insertion) mutants --
- *    insert bitwise logical operators (bitwise and-&, bitwise or-|,
- *    exclusive or-^)
+ *    insert bitwise not operator (~)
  * </p>
- * @author Yu-Seung Ma
- * @version 1.0
+ * @author Haoyuan Sun
+ * @version 0.1a
  */
 
 public class LOI extends Arithmetic_OP_Weak {
@@ -54,6 +53,7 @@ public class LOI extends Arithmetic_OP_Weak {
         if(mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
+// Should be removed later: handling AssignmentExpreesion should be done in InstrumentaionParser
 //    public void visit(AssignmentExpression p) throws ParseTreeException {
 //        Expression lexpr = p.getLeft();
 //
@@ -68,10 +68,10 @@ public class LOI extends Arithmetic_OP_Weak {
 //    }
 
     private void loiMutantGen(Expression p) throws ParseTreeException {
-        // original
+        // original -- without bitwise not
         typeStack.add(getType(p));
         exprStack.add(genVar(counter+2)); // +0
-        // mutant
+        // mutant -- with bitwise not
         typeStack.add(getType(p));
         exprStack.add(new UnaryExpression(genVar(counter+2), UnaryExpression.BIT_NOT)); // +1
         // expression

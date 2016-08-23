@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015  the original author or authors.
+ * Copyright (C) 2016 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import java.io.*;
  *    <i>falseOp</i> always returns <i>false</i> and 
  *    <i>trueOp</i> always returns <i>true</i> 
  * </p>
- * @author Yu-Seung Ma
- * @version 1.0
+ * @author Haoyuan Sun
+ * @version 0.1a
  */
 
 public class ROR extends Arithmetic_OP_Weak {
@@ -79,172 +79,70 @@ public class ROR extends Arithmetic_OP_Weak {
         exprStack.add(exp.getLeft()); // +3
         counter += 4;
 
-        /**
-         * the traditional ROR implementation
-         */
-
+        // set the binary operator for mutant
         if (op != BinaryExpression.GREATER) {
             mutant.setOperator(BinaryExpression.GREATER);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         if (op != BinaryExpression.GREATEREQUAL) {
             mutant.setOperator(BinaryExpression.GREATEREQUAL);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         if (op != BinaryExpression.LESS) {
             mutant.setOperator(BinaryExpression.LESS);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         if (op != BinaryExpression.LESSEQUAL) {
             mutant.setOperator(BinaryExpression.LESSEQUAL);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         if (op != BinaryExpression.EQUAL) {
             mutant.setOperator(BinaryExpression.EQUAL);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         if (op != BinaryExpression.NOTEQUAL) {
             mutant.setOperator(BinaryExpression.NOTEQUAL);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         pop(4);
 
-        //Complete the full implementation of ROR
-        //Note here the mutant is a type of Literal not a binary expression
+        // Change entire expression to true/false
 
         // original
         typeStack.add(OJSystem.BOOLEAN);
         exprStack.add((BinaryExpression)exp.makeRecursiveCopy()); // +0
-        //Change the expression to true
+        // Change the expression to true
         typeStack.add(OJSystem.BOOLEAN);
         exprStack.add(Literal.constantTrue());
         counter += 2;
-        outputToFile(exp, mutant);
+        outputToFile();
         pop(1);
-        //Change the expression to false
+        // Change the expression to false
         typeStack.add(OJSystem.BOOLEAN);
         exprStack.add(Literal.constantFalse());
         counter += 1;
-        outputToFile(exp, mutant);
+        outputToFile();
         pop(2);
 
         /**
          * New implementation of ROR based on the fault hierarchies
          * fewer ROR mutants are generated
          * For details, see the paper "Better predicate testing" by Kaminski, Ammann, and Offutt at AST'11
-         * This part is currently experimental, which means, users will not see this part during the new release
+         *
+         * Not included here, consult op/basic/ROR.java
          */
-     /* 
-      if (op == BinaryExpression.GREATER)
-      {
-    	 //mutant >=
-         mutant = (BinaryExpression)(exp.makeRecursiveCopy());
-         mutant.setOperator(BinaryExpression.GREATEREQUAL);
-         outputToFile(exp, mutant);
-         
-         //mutant !=
-         mutant = (BinaryExpression)(exp.makeRecursiveCopy());
-         mutant.setOperator(BinaryExpression.NOTEQUAL);
-         outputToFile(exp, mutant);
-         
-    	 //mutant false
-         outputToFile(exp, Literal.makeLiteral(false));
-      }
-      
-      if (op == BinaryExpression.GREATEREQUAL)
-      {
-    	 //mutant true
-         outputToFile(exp, Literal.makeLiteral(true));
-         
-         //mutant >
-         mutant = (BinaryExpression)(exp.makeRecursiveCopy());
-         mutant.setOperator(BinaryExpression.GREATER);
-         outputToFile(exp, mutant);
-         
-         //mutant ==
-         mutant = (BinaryExpression)(exp.makeRecursiveCopy());
-         mutant.setOperator(BinaryExpression.EQUAL);
-         outputToFile(exp, mutant);
-      }
-     
-      if (op == BinaryExpression.LESS)
-      {
-     	 //mutant false
-         outputToFile(exp, Literal.makeLiteral(false));
-         
-         //mutant <=
-         mutant = (BinaryExpression)(exp.makeRecursiveCopy());
-         mutant.setOperator(BinaryExpression.LESSEQUAL);
-         outputToFile(exp, mutant);
-         
-         //mutant !=
-         mutant = (BinaryExpression)(exp.makeRecursiveCopy());
-         mutant.setOperator(BinaryExpression.NOTEQUAL);
-         outputToFile(exp, mutant);
-      
-      }
-      
-      if (op == BinaryExpression.LESSEQUAL)
-      {
-     	 //mutant true
-         outputToFile(exp, Literal.makeLiteral(true));
-          
-         //mutant <
-         mutant = (BinaryExpression)(exp.makeRecursiveCopy());
-         mutant.setOperator(BinaryExpression.LESS);
-         outputToFile(exp, mutant);
-         
-         //mutant ==
-         mutant = (BinaryExpression)(exp.makeRecursiveCopy());
-         mutant.setOperator(BinaryExpression.EQUAL);
-         outputToFile(exp, mutant);
-      }
- 
-      if (op == BinaryExpression.EQUAL)
-      {
-      	 //mutant false
-         outputToFile(exp, Literal.makeLiteral(false));
-         
-         //mutant <=
-         mutant = (BinaryExpression)(exp.makeRecursiveCopy());
-         mutant.setOperator(BinaryExpression.LESSEQUAL);
-         outputToFile(exp, mutant);
-         
-         //mutant >=
-         mutant = (BinaryExpression)(exp.makeRecursiveCopy());
-         mutant.setOperator(BinaryExpression.GREATEREQUAL);
-         outputToFile(exp, mutant);
-      }
-       
-      if (op == BinaryExpression.NOTEQUAL)
-      {
-      	 //mutant false
-         outputToFile(exp, Literal.makeLiteral(true));
-         
-         //mutant <
-         mutant = (BinaryExpression)(exp.makeRecursiveCopy());
-         mutant.setOperator(BinaryExpression.LESS);
-         outputToFile(exp, mutant);
-         
-         //mutant >
-         mutant = (BinaryExpression)(exp.makeRecursiveCopy());
-         mutant.setOperator(BinaryExpression.GREATER);
-         outputToFile(exp, mutant);
-      }
-      
-      */
     }
 
     private void objectRORMutantGen(BinaryExpression exp, int op) throws ParseTreeException{
@@ -265,16 +163,17 @@ public class ROR extends Arithmetic_OP_Weak {
         exprStack.add(exp.getLeft()); // +3
         counter += 4;
 
+        // set the binary operator for mutant
         if (op != BinaryExpression.EQUAL) {
             mutant.setOperator(BinaryExpression.EQUAL);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         if (op != BinaryExpression.NOTEQUAL) {
             mutant.setOperator(BinaryExpression.NOTEQUAL);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         pop(4);
@@ -282,10 +181,8 @@ public class ROR extends Arithmetic_OP_Weak {
 
     /**
      * Output ROR mutants to files
-     * @param original
-     * @param mutant
      */
-    public void outputToFile(BinaryExpression original, BinaryExpression mutant) {
+    public void outputToFile() {
         if (comp_unit == null)
             return;
 

@@ -79,22 +79,23 @@ public class COR extends InstrumentationParser {
         exprStack.add(exp.getLeft()); // +3
         counter += 4;
 
+        // set the binary operator for mutant
         if ((op != BinaryExpression.LOGICAL_AND) && (op != BinaryExpression.BITAND)) {
             mutant.setOperator(BinaryExpression.LOGICAL_AND);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         if ((op != BinaryExpression.LOGICAL_OR) && (op != BinaryExpression.BITOR)) {
             mutant.setOperator(BinaryExpression.LOGICAL_OR);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         if (op != BinaryExpression.XOR) {
             mutant.setOperator(BinaryExpression.XOR);
 
-            outputToFile(exp, mutant);
+            outputToFile();
         }
 
         pop(4);
@@ -102,10 +103,8 @@ public class COR extends InstrumentationParser {
 
     /**
      * Output COR mutants to files
-     * @param original
-     * @param mutant
      */
-    public void outputToFile(BinaryExpression original, BinaryExpression mutant) {
+    public void outputToFile() {
         if (comp_unit == null)
             return;
 

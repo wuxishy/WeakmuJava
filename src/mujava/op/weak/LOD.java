@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015  the original author or authors.
+ * Copyright (C) 2016 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,10 @@ import java.io.*;
 
 /**
  * <p>Generate LOD (Logical Operator Deletion) mutants --
- *    delete each occurrence of bitwise logical operators 
- *    (bitwise and-&, bitwise or-|, exclusive or-^)
+ *    delete each occurrence of bitwise not operator (~)
  * </p>
- * @author Yu-Seung Ma
- * @version 1.0
+ * @author Haoyuan Sun
+ * @version 0.1a
  */
 
 public class LOD extends InstrumentationParser {
@@ -39,10 +38,10 @@ public class LOD extends InstrumentationParser {
 
         int op = p.getOperator();
         if (op == UnaryExpression.BIT_NOT) {
-            // original
+            // original -- with bitwise not
             typeStack.add(getType(p));
             exprStack.add(new UnaryExpression(genVar(counter+2), UnaryExpression.BIT_NOT)); // +0
-            // mutant
+            // mutant -- without bitwise not
             typeStack.add(getType(p));
             exprStack.add(genVar(counter+2)); // +1
             // expression
@@ -50,7 +49,7 @@ public class LOD extends InstrumentationParser {
             exprStack.add(p.getExpression()); // +2
             counter += 3;
 
-            outputToFile(p);
+            outputToFile();
 
             pop(3);
         }
@@ -60,9 +59,8 @@ public class LOD extends InstrumentationParser {
 
     /**
      * Output LOD mutants to files
-     * @param original
      */
-    public void outputToFile(UnaryExpression original) {
+    public void outputToFile() {
         if (comp_unit == null)
             return;
 

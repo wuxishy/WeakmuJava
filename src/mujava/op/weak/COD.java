@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015  the original author or authors.
+ * Copyright (C) 2016 the original author or authors.
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,10 @@ import java.io.*;
 
 /**
  * <p>Generate COD (Conditional Operator Deletion) mutants --
- *    delete each occurrence of logical operators (and-&&, or-||, 
- *    and with no conditional evaluation-&, 
- *    or with no conditional evaluation-|, not equivalent-^) 
+ *    delete each occurrence of logical not operators (!)
  * </p>
- * @author Yu-Seung Ma
- * @version 1.0
+ * @author Haoyuan Sun
+ * @version 0.1a
  */
 
 public class COD extends InstrumentationParser {
@@ -40,10 +38,10 @@ public class COD extends InstrumentationParser {
 
         int op = p.getOperator();
         if (op == UnaryExpression.NOT) {
-            // original
+            // original -- with logical not
             typeStack.add(OJSystem.BOOLEAN);
             exprStack.add(new UnaryExpression(genVar(counter+2), UnaryExpression.NOT)); // +0
-            // mutant
+            // mutant -- without logical not
             typeStack.add(OJSystem.BOOLEAN);
             exprStack.add(genVar(counter+2)); // +1
             // expression
@@ -51,7 +49,7 @@ public class COD extends InstrumentationParser {
             exprStack.add(p.getExpression()); // +2
             counter += 3;
 
-            outputToFile(p);
+            outputToFile();
 
             pop(3);
         }
@@ -61,9 +59,8 @@ public class COD extends InstrumentationParser {
 
     /**
      * Output COD mutants to files
-     * @param original
      */
-    public void outputToFile(UnaryExpression original) {
+    public void outputToFile() {
         if (comp_unit == null)
             return;
 

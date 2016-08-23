@@ -28,10 +28,15 @@ import openjava.ptree.*;
  */
 
 public class Instrument {
+    // main body of instrumentation
     public StatementList init;
+    // assertion
     public ArrayList<String> assertion;
+    // clean-up the instrumentation
+    // e.g. assign value, increment ...
+    // everything necessary to restore the state of the program
     public StatementList post;
-
+    // the name of the variable which stores the final value
     public String varName;
 
     public Instrument() {
@@ -48,6 +53,7 @@ public class Instrument {
 
     // Hack: because java thinks "unreachable code" is a compile error.
     // Tested up to Java 8, not guaranteed to work in future versions of Java.
+    // exit the problem after the mutated statement is executed
     public static String exit = "if (true) throw new WeakLiveException();";
 
     // throw this if the mutant is weakly killed
