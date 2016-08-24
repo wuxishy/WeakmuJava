@@ -51,6 +51,7 @@ package mujava;
 import openjava.ptree.*;
 import java.io.*;
 import mujava.op.basic.*;
+import mujava.op.weak.*;
 import mujava.op.util.*;
 import mujava.util.Debug;
 
@@ -187,112 +188,112 @@ public class TraditionalMutantsGenerator extends MutantsGenerator
                {
                   Debug.println("  Applying AOR-Binary ... ... ");
 //                  AOR_FLAG = true;
-                  mutant_op = new AORB(file_env, cdecl, comp_unit);
+                  mutant_op = new AORB_Weak(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
                }
                
-               if (hasOperator (traditionalOp, "AORS") )
+               /*if (hasOperator (traditionalOp, "AORS") )
                {
                   Debug.println("  Applying AOR-Short-Cut ... ... ");
 //                  AOR_FLAG = true;
                   mutant_op = new AORS(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
-               }
+               }*/
 
-               if (hasOperator (traditionalOp, "AODU") ) 
+               /*if (hasOperator (traditionalOp, "AODU") )
                {
                   Debug.println("  Applying AOD-Normal-Unary ... ... ");
                   mutant_op = new AODU(file_env, cdecl, comp_unit);
 //                  ((AODU)mutant_op).setAORflag(AOR_FLAG);
                   comp_unit.accept(mutant_op);
-               }
+               }*/
           
-               if (hasOperator (traditionalOp, "AODS") )
+               /*if (hasOperator (traditionalOp, "AODS") )
                {
                   Debug.println("  Applying AOD-Short-Cut ... ... ");
                   mutant_op = new AODS(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
-               }
+               }*/
                
-               if (hasOperator (traditionalOp, "AOIU") )
+               /*if (hasOperator (traditionalOp, "AOIU") )
                {
                   Debug.println("  Applying AOI-Normal-Unary ... ... ");
                   mutant_op = new AOIU(file_env,cdecl,comp_unit);
 //                  ((AOIU)mutant_op).setAORflag(AOR_FLAG);
                   comp_unit.accept(mutant_op);
-               }
+               }*/
                
-               if (hasOperator (traditionalOp, "AOIS") )
+               /*if (hasOperator (traditionalOp, "AOIS") )
                {
                   Debug.println("  Applying AOI-Short-Cut ... ... ");
                   mutant_op = new AOIS(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
-               }
+               }*/
                
                if (hasOperator (traditionalOp, "ROR") )
                {
                   Debug.println("  Applying ROR ... ... ");
-                  mutant_op = new ROR(file_env, cdecl, comp_unit);
+                  mutant_op = new ROR_Weak(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
                }
 
                if (hasOperator (traditionalOp, "COR") )
                {
                   Debug.println("  Applying COR ... ... ");
-                  mutant_op = new COR(file_env, cdecl, comp_unit);
+                  mutant_op = new COR_Weak(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
                }
 
                if (hasOperator (traditionalOp, "COD") ) 
                {
                   Debug.println("  Applying COD ... ... ");
-                  mutant_op = new COD(file_env, cdecl, comp_unit);
+                  mutant_op = new COD_Weak(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
                }
 
                if (hasOperator (traditionalOp, "COI") )
                {
                   Debug.println("  Applying COI ... ... ");
-                  mutant_op = new COI(file_env, cdecl, comp_unit);
+                  mutant_op = new COI_Weak(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
                }
 
                if (hasOperator (traditionalOp, "SOR") )
                {
                   Debug.println("  Applying SOR ... ... ");
-                  mutant_op = new SOR(file_env, cdecl, comp_unit);
+                  mutant_op = new SOR_Weak(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
                }
 
                if (hasOperator (traditionalOp, "LOR") )
                {
                   Debug.println("  Applying LOR ... ... ");
-                  mutant_op = new LOR(file_env, cdecl, comp_unit);
+                  mutant_op = new LOR_Weak(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
                }
 
                if (hasOperator (traditionalOp, "LOI") )
                {
                   Debug.println("  Applying LOI ... ... ");
-                  mutant_op = new LOI(file_env, cdecl, comp_unit);
+                  mutant_op = new LOI_Weak(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
                }
 
-               if (hasOperator (traditionalOp, "LOD") )
+               /*if (hasOperator (traditionalOp, "LOD") )
                { 
                   Debug.println("  Applying LOD ... ... ");
                   mutant_op = new LOD(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
-               }
+               }*/
 
                if (hasOperator (traditionalOp, "ASRS") )
                {
                   Debug.println("  Applying ASR-Short-Cut ... ... ");
-                  mutant_op = new ASRS(file_env, cdecl, comp_unit);
+                  mutant_op = new ASRS_Weak(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
                }
      
-               if (hasOperator (traditionalOp, "SDL") )
+               /*if (hasOperator (traditionalOp, "SDL") )
                {
                   Debug.println("  Applying SDL ... ... ");
                   mutant_op = new SDL(file_env, cdecl, comp_unit);
@@ -315,7 +316,7 @@ public class TraditionalMutantsGenerator extends MutantsGenerator
                   Debug.println("  Applying CDL ... ... ");
                   mutant_op = new CDL(file_env, cdecl, comp_unit);
                   comp_unit.accept(mutant_op);
-               }
+               }*/
 /*
                if (hasOperator (traditionalOp, "SID") )
                {
