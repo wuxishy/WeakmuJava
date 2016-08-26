@@ -150,7 +150,8 @@ public class ASRS_Weak extends InstrumentationMutator {
                 InstConfig.varPrefix + "MUTANT");
 
         // assign the value to the left hand side
-        inst.varName = InstConfig.varPrefix + "ORIGINAL";
+        inst.post.add(new ExpressionStatement(
+                new AssignmentExpression(original.getLeft(), "=", new Variable(InstConfig.varPrefix+"ORIGINAL"))));
 
         outputToFile(inst);
     }

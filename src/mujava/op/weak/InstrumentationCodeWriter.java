@@ -200,10 +200,16 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         // initializer
         if (init != null && (!init.isEmpty())) {
             for (int i = 0; i < init.size(); ++i) {
-                writeTab();
-                init.get(i).accept(this);
-                out.println(";");
-                line_num++;
+                if(isSameObject(init.get(i), mutExpression)){
+                    super.visit(inst.init);
+                    for (String str : inst.assertion) writeString(str);
+                    super.visit(inst.post);
+                } else {
+                    writeTab();
+                    init.get(i).accept(this);
+                    out.println(";");
+                    line_num++;
+                }
             }
         } else if (tspec != null && vdecls != null && vdecls.length != 0) {
             // change the name of variables declared in the initializer
