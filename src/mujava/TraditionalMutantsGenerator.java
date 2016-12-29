@@ -22,8 +22,8 @@
  *         the traditional-mutants folder. </p>
  *         
  * <p>Currently available traditional mutation operators:
- *         (1) AORB: Arithmetic Operator Replacement (Binary),    
- *         (2) AORU: Arithmetic Operator Replacement (Unary), 
+ *         (1) AORB: Arithmetic Operator Replacement (Binary),
+ *         (2) AORU was removed in 2015
  *         (3) AORS: Arithmetic Operator Replacement (Short-cut), 
  *         (4) AODU: Arithmetic Operator Deletion (Unary), 
  *         (5) AODS: Arithmetic Operator Deletion (Short-cut), 
@@ -200,13 +200,13 @@ public class TraditionalMutantsGenerator extends MutantsGenerator
                   comp_unit.accept(mutant_op);
                }*/
 
-               /*if (hasOperator (traditionalOp, "AODU") )
+               if (hasOperator (traditionalOp, "AODU") )
                {
                   Debug.println("  Applying AOD-Normal-Unary ... ... ");
-                  mutant_op = new AODU(file_env, cdecl, comp_unit);
+                  mutant_op = new AODU_Weak(file_env, cdecl, comp_unit);
 //                  ((AODU)mutant_op).setAORflag(AOR_FLAG);
                   comp_unit.accept(mutant_op);
-               }*/
+               }
           
                /*if (hasOperator (traditionalOp, "AODS") )
                {
@@ -215,13 +215,13 @@ public class TraditionalMutantsGenerator extends MutantsGenerator
                   comp_unit.accept(mutant_op);
                }*/
                
-               /*if (hasOperator (traditionalOp, "AOIU") )
+               if (hasOperator (traditionalOp, "AOIU") )
                {
                   Debug.println("  Applying AOI-Normal-Unary ... ... ");
-                  mutant_op = new AOIU(file_env,cdecl,comp_unit);
+                  mutant_op = new AOIU_Weak(file_env,cdecl,comp_unit);
 //                  ((AOIU)mutant_op).setAORflag(AOR_FLAG);
                   comp_unit.accept(mutant_op);
-               }*/
+               }
                
                /*if (hasOperator (traditionalOp, "AOIS") )
                {

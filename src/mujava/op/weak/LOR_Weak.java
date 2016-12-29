@@ -48,14 +48,14 @@ public class LOR_Weak extends InstrumentationParser {
             if ((op_type == BinaryExpression.XOR) ||
                     (op_type == BinaryExpression.BITAND) ||
                     (op_type == BinaryExpression.BITOR)) {
-                corMutantGen(p, op_type);
+                lorMutantGen(p, op_type);
             }
         }
 
         if (mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
 
-    private void corMutantGen(BinaryExpression exp, int op) throws ParseTreeException {
+    private void lorMutantGen(BinaryExpression exp, int op) throws ParseTreeException {
         BinaryExpression original = new BinaryExpression(genVar(counter + 3), exp.getOperator(), genVar(counter + 2));
         BinaryExpression mutant = (BinaryExpression) (original.makeRecursiveCopy());
 

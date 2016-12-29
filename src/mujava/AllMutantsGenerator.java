@@ -427,13 +427,13 @@ public class AllMutantsGenerator extends MutantsGenerator
                   comp_unit.accept(mutant_op);
                }*/
 
-               /*if (hasOperator (traditionalOp, "AODU") )
+               if (hasOperator (traditionalOp, "AODU") )
                {
                   Debug.println("  Applying AOD-Normal-Unary ... ... ");
-                  mutant_op = new AODU(file_env, cdecl, comp_unit);
+                  mutant_op = new AODU_Weak(file_env, cdecl, comp_unit);
 //                  ((AODU)mutant_op).setAORflag(AOR_FLAG);
                   comp_unit.accept(mutant_op);
-               }*/
+               }
 
                /*if (hasOperator (traditionalOp, "AODS") )
                {
@@ -442,13 +442,13 @@ public class AllMutantsGenerator extends MutantsGenerator
                   comp_unit.accept(mutant_op);
                }*/
 
-               /*if (hasOperator (traditionalOp, "AOIU") )
+               if (hasOperator (traditionalOp, "AOIU") )
                {
                   Debug.println("  Applying AOI-Normal-Unary ... ... ");
-                  mutant_op = new AOIU(file_env,cdecl,comp_unit);
+                  mutant_op = new AOIU_Weak(file_env,cdecl,comp_unit);
 //                  ((AOIU)mutant_op).setAORflag(AOR_FLAG);
                   comp_unit.accept(mutant_op);
-               }*/
+               }
 
                /*if (hasOperator (traditionalOp, "AOIS") )
                {
