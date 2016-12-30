@@ -47,6 +47,9 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
     // count the number of extra variables being used
     protected int counter = 0;
 
+    // the mutated expression to compare
+    protected int comp = 0;
+
     // keep the operands of the expression in a stack
     // the type of each statement
     protected Stack<OJClass> typeStack;
@@ -58,15 +61,24 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
     public void visit(AssignmentExpression p) throws ParseTreeException {
         if(mutExpression == null) mutExpression = p;
 
-        // assign the previous value to LHS
-        post.add(new ExpressionStatement(
-                new AssignmentExpression(p.getLeft(), p.getOperator(), genVar(counter))));
+        Variable ptr = genVar(counter);
 
-        // look for RHS
-        // TODO: LHS should be mutated if it is ArrayAccess
+        ExpressionList assign = new ExpressionList();
+        Expression lft = p.getLeft();
+        int lastOP = p.getOperator();
+        while(lft instanceof AssignmentExpression){
+            assign.add(((AssignmentExpression)lft).getRight());
+            // assign values
+            post.add(new ExpressionStatement(
+                    new AssignmentExpression(((AssignmentExpression)lft).getRight(), lastOP, ptr)));
+
+            lastOP = ((AssignmentExpression)lft).getOperator();
+            lft = ((AssignmentExpression)lft).getLeft();
+        }
+        assign.add(lft);
+        post.add(new ExpressionStatement(new AssignmentExpression(lft, lastOP, ptr)));
+
         p.getRight().accept(this);
-
-        post.remove(post.size()-1);
 
         if (mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
@@ -181,48 +193,79 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
         if(mutExpression == null) mutExpression = p;
 
         int addlines = 0;
-        int addpost = 0;
 
-        // prefix increment/decrement
-        if(p.getOperator() == UnaryExpression.PRE_DECREMENT) {
-            typeStack.add(getType(p));
-            exprStack.add(new BinaryExpression(genVar(counter+2), "-", Literal.constantOne())); //+0
-            typeStack.add(getType(p));
-            exprStack.add(new BinaryExpression(genVar(counter+3), "-", Literal.constantOne())); //+1
-
-            addlines = 2;
-        }
-        else if(p.getOperator() == UnaryExpression.PRE_INCREMENT) {
-            typeStack.add(getType(p));
-            exprStack.add(new BinaryExpression(genVar(counter+2), "+", Literal.constantOne())); //+0
-            typeStack.add(getType(p));
-            exprStack.add(new BinaryExpression(genVar(counter+3), "+", Literal.constantOne())); //+1
-
-            addlines = 2;
-        }
-        // postfix increment/decrement has no immediate effects
-        // other: plus, minus, logical not, bitwise not
-        else if(p.getOperator() >= 4) {
+        if(p.getOperator() >= 4) {
             typeStack.add(getType(p));
             exprStack.add(new UnaryExpression(genVar(counter+2), p.getOperator())); //+0
             typeStack.add(getType(p));
             exprStack.add(new UnaryExpression(genVar(counter+3), p.getOperator())); //+1
 
             addlines = 2;
+
+            counter += addlines;
+
+            p.getExpression().accept(this);
         }
+        // short-cut operators can only operate on variables and array elements
+        // but no mutants can be generated for variables
+        else if (p.getExpression() instanceof ArrayAccess){
+            ExpressionList ind = new ExpressionList();
 
-        counter += addlines;
+            typeStack.add(getType(p));
+            exprStack.add(genVar(counter+1));
+            typeStack.add(getType(p));
+            if(p.getOperator() == UnaryExpression.PRE_INCREMENT){
+                exprStack.add(new BinaryExpression(null, "+", Literal.constantOne()));
+            }
+            else if(p.getOperator() == UnaryExpression.PRE_DECREMENT){
+                exprStack.add(new BinaryExpression(null, "-", Literal.constantOne()));
+            }
+            else if(p.getOperator() == UnaryExpression.POST_INCREMENT){
+                exprStack.add(new BinaryExpression(null, "+", Literal.constantZero()));
+            }
+            else if(p.getOperator() == UnaryExpression.POST_DECREMENT){
+                exprStack.add(new BinaryExpression(null, "-", Literal.constantZero()));
+            }
 
-        // short-cut in/decrement
-        if(p.getOperator() < 4) {
-            post.add(new ExpressionStatement((UnaryExpression) p.makeRecursiveCopy()));
-            addpost = 1;
+            addlines += 2;
+            counter += 2;
+
+            Expression ref = p.getExpression();
+            do{
+                ind.add(genVar(counter + addlines));
+                typeStack.add(OJSystem.INT); // array index is always integer
+                exprStack.add(((ArrayAccess)ref).getIndexExpr());
+
+                ++addlines;
+
+                ref = ((ArrayAccess)ref).getReferenceExpr();
+            } while(ref instanceof ArrayAccess);
+
+            counter += addlines;
+
+            comp = counter;
+
+            for(int i = 0; i < ind.size(); ++i){
+                Expression cur = exprStack.get(counter-ind.size()+i);
+
+                ind.set(i, genVar(counter));
+                exprStack.set(counter-ind.size()+i, null);
+
+                ArrayAccess access = reconstructArrayAccess(ref, ind);
+                ((BinaryExpression)exprStack.get(counter-ind.size()-1)).setLeft(access);
+                post.add(new ExpressionStatement(new UnaryExpression(p.getOperator(), access)));
+
+                cur.accept(this);
+
+                ind.set(i, genVar(counter-ind.size()+i));
+                exprStack.set(counter-ind.size()+i, cur);
+                post.remove(post.size()-1);
+            }
+
+            comp = 0;
         }
-
-        p.getExpression().accept(this);
 
         pop(addlines);
-        for(int i = 0; i < addpost; ++i) post.remove(post.size()-1);
 
         if(mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
@@ -235,7 +278,7 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
             inst.init.add(new VariableDeclaration(TypeName.forOJClass(typeStack.get(i)),
                                                   InstConfig.varPrefix+i, exprStack.get(i)));
         }
-        inst.addAssertion(InstConfig.varPrefix+0, InstConfig.varPrefix+1);
+        inst.addAssertion(InstConfig.varPrefix+comp, InstConfig.varPrefix+(comp+1));
         inst.post = post;
         inst.varName = InstConfig.varPrefix+0;
 
@@ -254,5 +297,14 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
     // generate a variable with name in the form of prefix+number
     protected Variable genVar(int i){
         return new Variable(InstConfig.varPrefix + i);
+    }
+
+    // remake ArrayAccess, ind lists indexes in reverse order
+    protected ArrayAccess reconstructArrayAccess(Expression ref, ExpressionList ind){
+        ArrayAccess ret = new ArrayAccess(ref, ind.get(ind.size()-1));
+
+        for(int i = ind.size()-2; i >= 0; --i) ret = new ArrayAccess(ret, ind.get(i));
+
+        return ret;
     }
 }
