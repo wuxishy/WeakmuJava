@@ -58,6 +58,59 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
 
     protected StatementList post;
 
+    public void visit(ArrayAccess p) throws ParseTreeException{
+        if (mutExpression == null) mutExpression = p;
+
+        typeStack.add(getType(p));
+        exprStack.add(null);
+        typeStack.add(getType(p));
+        exprStack.add(null);
+
+        counter += 2;
+
+        ExpressionList origInd = new ExpressionList();
+        ExpressionList mutInd = new ExpressionList();
+        int dim = 0;
+        Expression ref = p;
+        do{
+            origInd.add(genVar(counter + dim));
+            mutInd.add(genVar(counter + dim));
+            typeStack.add(OJSystem.INT); // array index is always integer
+            exprStack.add(((ArrayAccess)ref).getIndexExpr());
+
+            ++dim;
+
+            ref = ((ArrayAccess)ref).getReferenceExpr();
+        } while(ref instanceof ArrayAccess);
+
+        counter += dim;
+
+        comp = counter;
+
+        for(int i = 0; i < dim; ++i){
+            Expression cur = exprStack.get(counter-dim+i);
+
+            origInd.set(i, genVar(counter));
+            mutInd.set(i, genVar(counter+1));
+            exprStack.set(counter-dim+i, null);
+
+            exprStack.set(counter-dim-2, reconstructArrayAccess(ref, origInd));
+            exprStack.set(counter-dim-1, reconstructArrayAccess(ref, mutInd));
+
+            cur.accept(this);
+
+            origInd.set(i, genVar(counter-dim+i));
+            mutInd.set(i, genVar(counter-dim+i));
+            exprStack.set(counter-dim+i, cur);
+        }
+
+        comp = 0;
+
+        pop(dim + 2);
+
+        if(mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
+    }
+
     public void visit(AssignmentExpression p) throws ParseTreeException {
         if(mutExpression == null) mutExpression = p;
 
