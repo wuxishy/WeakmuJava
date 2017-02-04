@@ -110,73 +110,16 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
     public void visit(AssignmentExpression p) throws ParseTreeException {
         if(mutExpression == null) mutExpression = p;
 
-        Variable ptr = genVar(counter);
+        // assign the previous value to LHS
+        post.add(new ExpressionStatement(
+                new AssignmentExpression(p.getLeft(), p.getOperator(), genVar(counter))));
 
-        ExpressionList assign = new ExpressionList();
-        Expression lft = p.getLeft();
-        int lastOP = p.getOperator();
-        while(lft instanceof AssignmentExpression){
-            assign.add(((AssignmentExpression)lft).getRight());
-            // assign values
-            post.add(new ExpressionStatement(
-                    new AssignmentExpression(((AssignmentExpression)lft).getRight(), lastOP, ptr)));
-
-            lastOP = ((AssignmentExpression)lft).getOperator();
-            lft = ((AssignmentExpression)lft).getLeft();
-        }
-        assign.add(lft);
-        post.add(new ExpressionStatement(new AssignmentExpression(lft, lastOP, ptr)));
-
-        // mutate RHS
+        // look for RHS
+        // left assignments will not be examined
+        // -- Haoyuan Feb 2017
         p.getRight().accept(this);
 
-        // mutate ArrayAccess in LHS
-        typeStack.add(getType(p));
-        exprStack.add(p.getRight());
-        ++counter;
-
-        for(int i = 0; i < assign.size(); ++i)
-            if(assign.get(i) instanceof ArrayAccess){
-                ExpressionList ind = new ExpressionList();
-                int dim = 0;
-                Expression ref = assign.get(i);
-                do{
-                    ind.add(genVar(counter + dim));
-                    typeStack.add(OJSystem.INT); // array index is always integer
-                    exprStack.add(((ArrayAccess)ref).getIndexExpr());
-
-                    ++dim;
-
-                    ref = ((ArrayAccess)ref).getReferenceExpr();
-                } while(ref instanceof ArrayAccess);
-
-                counter += dim;
-
-                comp = counter;
-
-                for(int j = 0; j < dim; ++j){
-                    Expression cur = exprStack.get(counter-dim+j);
-
-                    ind.set(j, genVar(counter));
-                    exprStack.set(counter-dim+j, null);
-
-                    ((BinaryExpression)post.get(post.size()-dim+i)).setLeft(reconstructArrayAccess(ref, ind));
-
-                    cur.accept(this);
-
-                    ind.set(j, genVar(counter-dim+j));
-                    exprStack.set(counter-dim+j, cur);
-                }
-
-                comp = 0;
-
-                pop(dim);
-
-                ((BinaryExpression)post.get(post.size()-dim+i)).setLeft(assign.get(i));
-            }
-
-        pop(1);
-        for(int i = 0; i < assign.size(); ++i) post.remove(post.size()-1);
+        post.remove(post.size()-1);
 
         if (mutExpression.getObjectID() == p.getObjectID()) mutExpression = null;
     }
