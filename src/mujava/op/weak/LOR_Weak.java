@@ -42,8 +42,8 @@ public class LOR_Weak extends InstrumentationParser {
         // mutate the current binary operator
         if (mutExpression == null) mutExpression = p;
 
-        if ((getType(p.getLeft()) == OJSystem.BOOLEAN) &&
-                (getType(p.getRight()) == OJSystem.BOOLEAN)) {
+        if ((getType(p.getLeft()) != OJSystem.BOOLEAN) &&
+                (getType(p.getRight()) != OJSystem.BOOLEAN)) {
             int op_type = p.getOperator();
             if ((op_type == BinaryExpression.XOR) ||
                     (op_type == BinaryExpression.BITAND) ||
