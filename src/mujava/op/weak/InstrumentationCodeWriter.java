@@ -178,6 +178,7 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         if(isSameObject(mutStatement, p)) {
             // instrumentation got everything
             p.getExpression().accept(this);
+            writeExit(p);
         }
         else super.visit(p);
     }
