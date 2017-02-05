@@ -250,58 +250,76 @@ public abstract class InstrumentationParser extends InstrumentationMutator{
         // short-cut operators can only operate on variables and array elements
         // but no mutants can be generated for variables
         else if (p.getExpression() instanceof ArrayAccess){
-            ExpressionList ind = new ExpressionList();
+            typeStack.add(getType(p));
+            typeStack.add(getType(p));
 
-            typeStack.add(getType(p));
-            exprStack.add(genVar(counter+1));
-            typeStack.add(getType(p));
             if(p.getOperator() == UnaryExpression.PRE_INCREMENT){
-                exprStack.add(new BinaryExpression(null, "+", Literal.constantOne()));
+                exprStack.add(new BinaryExpression(genVar(counter+2), "+", Literal.constantOne()));
+                exprStack.add(new BinaryExpression(genVar(counter+3), "+", Literal.constantOne()));
             }
             else if(p.getOperator() == UnaryExpression.PRE_DECREMENT){
-                exprStack.add(new BinaryExpression(null, "-", Literal.constantOne()));
+                exprStack.add(new BinaryExpression(genVar(counter+2), "-", Literal.constantOne()));
+                exprStack.add(new BinaryExpression(genVar(counter+3), "-", Literal.constantOne()));
             }
             else if(p.getOperator() == UnaryExpression.POST_INCREMENT){
-                exprStack.add(new BinaryExpression(null, "+", Literal.constantZero()));
+                exprStack.add(new BinaryExpression(genVar(counter+2), "+", Literal.constantZero()));
+                exprStack.add(new BinaryExpression(genVar(counter+3), "+", Literal.constantZero()));
             }
             else if(p.getOperator() == UnaryExpression.POST_DECREMENT){
-                exprStack.add(new BinaryExpression(null, "-", Literal.constantZero()));
+                exprStack.add(new BinaryExpression(genVar(counter+2), "-", Literal.constantZero()));
+                exprStack.add(new BinaryExpression(genVar(counter+3), "-", Literal.constantZero()));
             }
 
-            addlines += 2;
-            counter += 2;
+            typeStack.add(getType(p));
+            exprStack.add(null); // +2
+            typeStack.add(getType(p));
+            exprStack.add(null); // +3
 
+            addlines += 4;
+            counter += 4;
+
+            ExpressionList origInd = new ExpressionList();
+            ExpressionList mutInd = new ExpressionList();
+            int dim = 0;
             Expression ref = p.getExpression();
             do{
-                ind.add(genVar(counter + addlines));
+                origInd.add(genVar(counter + dim));
+                mutInd.add(genVar(counter + dim));
                 typeStack.add(OJSystem.INT); // array index is always integer
                 exprStack.add(((ArrayAccess)ref).getIndexExpr());
 
-                ++addlines;
+                ++dim;
 
                 ref = ((ArrayAccess)ref).getReferenceExpr();
             } while(ref instanceof ArrayAccess);
 
-            counter += addlines;
+            addlines += dim;
+            counter += dim;
 
             comp = counter;
 
-            for(int i = 0; i < ind.size(); ++i){
-                Expression cur = exprStack.get(counter-ind.size()+i);
+            post.add(null);
 
-                ind.set(i, genVar(counter));
-                exprStack.set(counter-ind.size()+i, null);
+            for(int i = 0; i < dim; ++i){
+                Expression cur = exprStack.get(counter-dim+i);
 
-                ArrayAccess access = reconstructArrayAccess(ref, ind);
-                ((BinaryExpression)exprStack.get(counter-ind.size()-1)).setLeft(access);
-                post.add(new ExpressionStatement(new UnaryExpression(p.getOperator(), access)));
+                origInd.set(i, genVar(counter));
+                mutInd.set(i, genVar(counter+1));
+                exprStack.set(counter-dim+i, null);
+
+                exprStack.set(counter-dim-2, reconstructArrayAccess(ref, origInd));
+                exprStack.set(counter-dim-1, reconstructArrayAccess(ref, mutInd));
+                post.set(post.size()-1, new ExpressionStatement(
+                        new UnaryExpression(p.getOperator(), reconstructArrayAccess(ref, origInd))));
 
                 cur.accept(this);
 
-                ind.set(i, genVar(counter-ind.size()+i));
-                exprStack.set(counter-ind.size()+i, cur);
-                post.remove(post.size()-1);
+                origInd.set(i, genVar(counter-dim+i));
+                mutInd.set(i, genVar(counter-dim+i));
+                exprStack.set(counter-dim+i, cur);
             }
+
+            post.remove(post.size()-1);
 
             comp = 0;
         }
