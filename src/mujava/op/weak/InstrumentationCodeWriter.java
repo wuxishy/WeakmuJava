@@ -331,6 +331,21 @@ public class InstrumentationCodeWriter extends TraditionalMutantCodeWriter {
         line_num++;
     }
 
+    // handle cases like `a[index]++;`
+    public void visit(UnaryExpression p) throws ParseTreeException {
+        if(!isSameObject(mutExpression, p)){
+            super.visit(p);
+            return;
+        }
+
+        out.println();
+        line_num++;
+        super.visit(inst.init);
+        for (String str : inst.assertion) writeString(str);
+        // change variable after evaluation
+        super.visit(inst.post);
+    }
+
     public void visit(Variable p) throws ParseTreeException {
         String name = p.toString();
 
